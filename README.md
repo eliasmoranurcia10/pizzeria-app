@@ -185,3 +185,114 @@ Utilizar estas opciones no solo mejora la experiencia de desarrollo, sino que ta
 
 
 
+# 04-Creación de Entidades con Hibernate en Java
+
+Creado: 7 de octubre de 2025 12:59
+ítem principal: 02-PRIMEROS PASOS (https://www.notion.so/02-PRIMEROS-PASOS-281f5b42f770809ba8def15039bfc3d1?pvs=21)
+
+## **¿Cómo crear entidades con Hibernate y JPA?**
+
+La creación de entidades en un proyecto usando Hibernate y JPA es un proceso esencial para traducir tu modelo lógico al físico, generando automáticamente tablas en la base de datos. En este artículo, exploraremos cómo configurar y crear entidades básicas, comenzando con `PizzaEntity` y `OrderEntity`.
+
+### **¿Cómo se configura la clase PizzaEntity?**
+
+Para comenzar a definir nuestra entidad `PizzaEntity`, lo primero es entender que cada clase se debe anotar con `@Entity` y `@Table`, lo que indica que se traducirá a una tabla:
+
+```java
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = "pizza")
+public class PizzaEntity {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id_pizza", nullable = false)
+    private Integer idPizza;
+
+    @Column(unique = true, nullable = false, length = 30)
+    private String name;
+
+    @Column(nullable = false, length = 150)
+    private String description;
+
+    @Column(nullable = false, columnDefinition = "DECIMAL(5,2)")
+    private Double price;
+
+    @Column(columnDefinition = "TINYINT")
+    private Boolean vegetarian;
+
+    @Column(columnDefinition = "TINYINT")
+    private Boolean vegan;
+
+    @Column(columnDefinition = "TINYINT", nullable = false)
+    private Boolean available;
+}
+
+```
+
+- **Paso clave**: Usar la anotación `@Id` junto con `@GeneratedValue` especifica que este campo es la clave primaria y se autoincrementará.
+- **Detalles adicionales**: `@Column` permite definir características adicionales de las columnas, como `unique`, `nullable`, `length` y `columnDefinition`.
+
+### **¿Cómo se crea la entidad OrderEntity?**
+
+La entidad `OrderEntity` es similar, pero incluye atributos adeguados a su propósito:
+
+```java
+@Entity
+@Table(name = "pizza_order")
+public class OrderEntity {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id_order", nullable = false)
+    private Integer idOrder;
+
+    @Column(name = "id_customer", nullable = false, length = 15)
+    private String idCustomer;
+
+    @Column(nullable = false, columnDefinition = "DATETIME")
+    private LocalDateTime date;
+
+    @Column(nullable = false, columnDefinition = "DECIMAL(6,2)")
+    private Double total;
+
+    @Column(nullable = false, columnDefinition = "CHAR(1)")
+    private String method;
+
+    @Column(name = "additional_notes", length = 200)
+    private String additionalNotes;
+}
+
+```
+
+- **Importante**: En caso de atributos que representen fechas o precios, es crucial definir correctamente los tipos de datos con `columnDefinition`.
+- **Aclaración**: Atributos como `additionalNotes` permiten `null`, lo que implica que no es necesario anotar con `nullable` si no afecta el diseño.
+
+### **¿Qué librerías se utilizan?**
+
+Se hace uso de las librerías proveídas por **Jakarta** para la gestión de persistencia y entidades. Esto es esencial al migrar desde JavaX. Herramientas como **Lombok** pueden facilitar la creación de getters y setters sin complicar el código con `@Data` cuando no es necesario, especialmente para prácticas más refinadas en ORM.
+
+```java
+@Getter
+@Setter
+@NoArgsConstructor
+public class PizzaEntity {
+    // Atributos y configuración
+}
+
+```
+
+### **¿Por qué es importante definir estrategias y validaciones?**
+
+Definir estrategias para la generación de valores, como con `strategy = GenerationType.IDENTITY`, es vital para garantizar que la base de datos maneje eficientemente los IDs. La validación de datos a nivel de base de datos mediante constraints como `nullable = false` y `unique = true` protege la integridad del modelo.
+
+### **¿Cómo probar la creación automática de tablas?**
+
+Después de definir las entidades y configurarlas con Hibernate, al ejecutar la aplicación, las tablas deberían generarse automáticamente. Esto se puede confirmar si en el log de la consola Hibernate muestra mensajes de `create table` indicando la creación de `pizza` y `pizza_order`.
+
+### **¿Puedes implementar otras entidades?**
+
+Te invito a que crees las entidades restantes, `Customer` y `OrderItem`, aplicando los conceptos discutidos aquí. Un desafío adicional es implementar las claves primarias compuestas para `OrderItem`. ¡No te desanimes si encuentras dificultades! Aprender y explorar nuevas técnicas es parte del viaje del desarrollo de software.
+
+
+
+
