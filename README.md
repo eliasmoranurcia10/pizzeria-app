@@ -295,4 +295,91 @@ Te invito a que crees las entidades restantes, `Customer` y `OrderItem`, apli
 
 
 
+# 05-Relaciones entre Entidades en JPA: OneToOne, ManyToOne, OneToMany
+
+Creado: 7 de octubre de 2025 18:19
+ítem principal: 02-PRIMEROS PASOS (https://www.notion.so/02-PRIMEROS-PASOS-281f5b42f770809ba8def15039bfc3d1?pvs=21)
+
+## **¿Cómo se traducen las relaciones a entidades con anotaciones en JPA?**
+
+El mapeo de relaciones en JPA (Java Persistence API) es una pieza esencial para trabajar con bases de datos relacionales. En esta guía, exploraremos cómo implementar diferentes tipos de relaciones entre entidades usando anotaciones como `@OneToOne`, `@ManyToOne` y `@OneToMany`.
+
+El objetivo es que puedas entender cómo estas relaciones se representan en el código para que puedan interactuar eficazmente durante las operaciones de manipulación de datos.
+
+### **¿Cuáles son los tipos de relaciones más comunes?**
+
+Antes de adentrarnos en el código, recordemos los cuatro tipos de tablas que discutimos:
+
+1. **Uno a Uno**: Se representa mediante `@OneToOne`. En nuestro caso, la relación es entre `OrderItem` y `Pixsa`, lo que significa que cada `OrderItem` está asociado con un solo `Pixsa`.
+2. **Uno a Muchos**: Se logra con `@OneToMany`. `PixsaOrder` puede contener muchos `OrderItems`.
+3. **Muchos a Uno**: Utiliza `@ManyToOne`. Este tipo de relación también se observa entre `OrderItem` y `PixsaOrder`, donde múltiples `OrderItems` pueden asociarse a una sola orden.
+
+Un ejemplo práctico de los códigos de anotaciones es fundamental para visualizar mejor estas relaciones:
+
+```java
+// Relación Uno a Uno
+@OneToOne
+@JoinColumn(name = "id_pizza", referencedColumnName = "id_pizza", insertable = false, updatable = false)
+private PizzaEntity pizza;
+
+```
+
+```java
+// Relación Muchos a Uno
+@ManyToOne
+@JoinColumn(name = "idOrder", referencedColumnName = "idOrder", insertable = false, updatable = false)
+private OrderEntity order;
+
+```
+
+### **¿Cómo se trabaja con claves primarias compuestas?**
+
+Creación de claves compuestas es otra parte vital del trabajo con JPA, donde dos o más atributos forman una clave primaria:
+
+- Utilizar la anotación `@IdClass` es esencial para gestionar estas claves compuestas.
+
+Ejemplo de cómo definimos varias claves:
+
+```java
+@IdClass(OrderItemId.class) // Define la clase de clave compuesta
+public class OrderItemEntity {
+
+    @Id
+    private Integer idOrder;
+
+    @Id
+    private Integer idItem;
+
+    // Métodos adicionales (equals, hashCode) para asegurar consistencia
+}
+
+```
+
+### **¿Cómo se implementan las anotaciones para asegurar integridad referencial?**
+
+En la integración de estas relaciones, la integridad y el rendimiento son cruciales. Utilizar `@JoinColumn` es importante. Se usa para especificar la columna a través de la cual están vinculadas dos tablas.
+
+Por ejemplo, se puede definir la relación `OneToMany` como sigue:
+
+```java
+@OneToMany(mappedBy = "order")
+private List<OrderItemEntity> items;
+
+```
+
+Aquí, `mappedBy` se utiliza para definir la relación en el lado no propietario. En nuestra aplicación, el `OrderEntity` es el lado no propietario, y `OrderItemEntity` la tabla hija donde se originan muchas instancias desde una sola orden.
+
+### **¿Cuáles son las recomendaciones para el uso de estas relaciones?**
+
+Al crear relaciones, es clave tener en cuenta el impacto en el desempeño de la aplicación. No siempre es necesario crear relaciones bidireccionales o añadir todas las posibles relaciones que se puedan modelar.
+
+1. **Simplificar consultas**: Mediante consultas `{query}` o repositorios de Spring, se pueden derivar datos sin necesidad de establecer relaciones directas en todos los contextos.
+2. **Evitar sobrecarga**: Solo se deben crear las relaciones que sean necesarias estrictamente para garantizar el rendimiento óptimo y la reducción de carga.
+
+Crear relaciones en JPA es esencial para lograr una interacción efectiva entre entidades y bases de datos. Los conceptos discutidos, como el uso de anotaciones y claves compuestas, te posicionan mejor para desarrollar aplicaciones robustas que gestionan eficientemente los datos.
+
+Sigue explorando y aplicando estos principios para afianzarte en el desarrollo backend utilizando JPA. ¡Tu maestría en estos conceptos solo puede mejorar y refinándose!
+
+
+
 
