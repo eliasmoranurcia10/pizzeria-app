@@ -709,4 +709,79 @@ Sigue explorando las capacidades de Spring y aprovéchalas en tus proyectos. ¡E
 
 
 
+# 09-Eliminar elementos con Spring Data JPA: método deleteById
+
+Creado: 8 de octubre de 2025 2:14
+ítem principal: 03-SPRING DATA REPOSITORIES (https://www.notion.so/03-SPRING-DATA-REPOSITORIES-281f5b42f770806c884ce10c3f0d7fd3?pvs=21)
+
+## **¿Cómo eliminar un elemento de la base de datos utilizando Crude Repository en Spring?**
+
+Eliminar un elemento de la base de datos es una operación básica pero fundamental en cualquier aplicación. Spring Framework facilita este proceso a través de su Crude Repository, ofreciendo métodos intuitivos y directos para gestionar datos con eficacia. Vamos a explorar cómo puedes eliminar un elemento, en este caso una "pixa", utilizando Spring y su Crude Repository.
+
+### **¿Qué es Crude Repository y cómo ayuda en la eliminación?**
+
+Crude Repository es una interfaz que define operaciones básicas para crear, leer, actualizar y eliminar datos en la base de datos, conocidas como operaciones CRUD (por sus siglas en inglés: Create, Read, Update, Delete). Ya hemos explorado cómo leer y guardar datos con el método `save`, pero ahora nos enfocaremos en la operación de eliminación.
+
+### **¿Cómo se implementa un método de eliminación?**
+
+Para eliminar una "pixa" por su identificador único, implementaremos un método que no retorna nada. Este método utilizará `deleteById`, un método proporcionado por Crude Repository específicamente para borrar elementos a partir de su clave primaria.
+
+```java
+public void delete(int idPixa) {
+    this.pixaRepository.deleteById(idPixa);
+}
+
+```
+
+Este método toma como parámetro el ID de la "pixa" y llama al `deleteById`, el cual se encarga de toda la lógica de eliminación.
+
+### **¿Cómo se crea un endpoint para eliminar una entrada?**
+
+En el controlador de la aplicación, debemos definir el endpoint que permita recibir peticiones de eliminación. Utilizaremos `DeleteMapping` para asociar el endpoint HTTP DELETE.}
+
+```java
+@DeleteMapping("/{idPizza}")
+public ResponseEntity<Void> delete(@PathVariable int idPizza) throws BadRequestException {
+    this.pizzaService.delete(idPizza);
+    return ResponseEntity.noContent().build();
+}
+```
+
+```java
+public void delete(int idPizza) throws BadRequestException {
+    if (!exists(idPizza)) throw new BadRequestException("Error al eliminar, la pizza no se encuentra");
+    this.pizzaRepository.deleteById(idPizza);
+}
+
+```
+
+1. **Verificación de existencia:** Utilizamos un método `exist` antes de intentar eliminar la pixa, asegurándonos de que efectivamente existe.
+2. **Manejo de respuestas:** Retornamos un `ResponseEntity` vacío con un estado 200 si la eliminación fue exitosa, o un estado 400 si no se pudo realizar.
+
+### **¿Qué sucede detrás de escena al eliminar un elemento?**
+
+Cuando envías una petición para eliminar una "pixa", se piensa comúnmente que es eliminado de manera directa. Sin embargo, bajo el capó, ocurre más:
+
+- **Verificación inicial con `select count`:** Se ejecuta primero este comando para confirmar la existencia del elemento.
+- **Ejecución de eliminación:** Solo después de verificar la existencia, se procede a ejecutar la operación de eliminación con el método `deleteById` transformado en un comando SQL por Hibernate.
+
+### **¿Cómo verificar que una "pixa" ha sido eliminada?**
+
+Después de realizar la operación DELETE, puedes verificar que el elemento ha sido eliminado mediante una consulta GET al servicio:
+
+```java
+// Método en el servicio para obtener una pixa
+public Pixa getById(int idPixa) {
+    return this.pixaRepository.findById(idPixa).orElse(null);
+}
+
+```
+
+Al realizar una petición GET y no obtener respuesta, puedes confirmar que el elemento ya no está en la base de datos.
+
+El poder de Spring Data Repositories radica en su capacidad para simplificar la interacción con la base de datos, relegando al desarrollador a simplemente implementar los métodos necesarios y dejar que Framework maneje el resto. ¡Sigue explorando y aprendiendo! En la próxima lección, veremos cómo gestionar las relaciones en la base de datos con Lazy y Eager.
+
+
+
+
 

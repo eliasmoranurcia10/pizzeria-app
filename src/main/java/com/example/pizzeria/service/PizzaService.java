@@ -4,6 +4,7 @@ import com.example.pizzeria.persistence.entity.PizzaEntity;
 import com.example.pizzeria.persistence.repository.PizzaRepository;
 import lombok.AllArgsConstructor;
 import org.apache.coyote.BadRequestException;
+import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -35,6 +36,11 @@ public class PizzaService {
             return this.pizzaRepository.save(pizza);
         }
         throw new BadRequestException("Error al actualizar la pizza");
+    }
+
+    public void delete(int idPizza) throws BadRequestException {
+        if (!exists(idPizza)) throw new BadRequestException("Error al eliminar, la pizza no se encuentra");
+        this.pizzaRepository.deleteById(idPizza);
     }
 
     public boolean exists(int idPizza) {

@@ -4,6 +4,7 @@ import com.example.pizzeria.persistence.entity.PizzaEntity;
 import com.example.pizzeria.service.PizzaService;
 import lombok.AllArgsConstructor;
 import org.apache.coyote.BadRequestException;
+import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -33,5 +34,11 @@ public class PizzaController {
     @PutMapping
     public ResponseEntity<PizzaEntity> update(@RequestBody PizzaEntity pizza) throws BadRequestException {
         return ResponseEntity.ok(this.pizzaService.update(pizza));
+    }
+
+    @DeleteMapping("/{idPizza}")
+    public ResponseEntity<Void> delete(@PathVariable int idPizza) throws BadRequestException {
+        this.pizzaService.delete(idPizza);
+        return ResponseEntity.noContent().build();
     }
 }
