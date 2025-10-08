@@ -15,8 +15,8 @@ import lombok.Setter;
 public class CustomerEntity {
 
     @Id
-    @Column(name = "id_consumer", nullable = false, length = 15, unique = true)
-    private String idConsumer;
+    @Column(name = "id_customer", nullable = false, length = 15, unique = true)
+    private String idCustomer;
 
     @Column(nullable = false, length = 60)
     private String name;
