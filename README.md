@@ -185,3 +185,366 @@ Utilizar estas opciones no solo mejora la experiencia de desarrollo, sino que ta
 
 
 
+# 04-Creación de Entidades con Hibernate en Java
+
+Creado: 7 de octubre de 2025 12:59
+ítem principal: 02-PRIMEROS PASOS (https://www.notion.so/02-PRIMEROS-PASOS-281f5b42f770809ba8def15039bfc3d1?pvs=21)
+
+## **¿Cómo crear entidades con Hibernate y JPA?**
+
+La creación de entidades en un proyecto usando Hibernate y JPA es un proceso esencial para traducir tu modelo lógico al físico, generando automáticamente tablas en la base de datos. En este artículo, exploraremos cómo configurar y crear entidades básicas, comenzando con `PizzaEntity` y `OrderEntity`.
+
+### **¿Cómo se configura la clase PizzaEntity?**
+
+Para comenzar a definir nuestra entidad `PizzaEntity`, lo primero es entender que cada clase se debe anotar con `@Entity` y `@Table`, lo que indica que se traducirá a una tabla:
+
+```java
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = "pizza")
+public class PizzaEntity {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id_pizza", nullable = false)
+    private Integer idPizza;
+
+    @Column(unique = true, nullable = false, length = 30)
+    private String name;
+
+    @Column(nullable = false, length = 150)
+    private String description;
+
+    @Column(nullable = false, columnDefinition = "DECIMAL(5,2)")
+    private Double price;
+
+    @Column(columnDefinition = "TINYINT")
+    private Boolean vegetarian;
+
+    @Column(columnDefinition = "TINYINT")
+    private Boolean vegan;
+
+    @Column(columnDefinition = "TINYINT", nullable = false)
+    private Boolean available;
+}
+
+```
+
+- **Paso clave**: Usar la anotación `@Id` junto con `@GeneratedValue` especifica que este campo es la clave primaria y se autoincrementará.
+- **Detalles adicionales**: `@Column` permite definir características adicionales de las columnas, como `unique`, `nullable`, `length` y `columnDefinition`.
+
+### **¿Cómo se crea la entidad OrderEntity?**
+
+La entidad `OrderEntity` es similar, pero incluye atributos adeguados a su propósito:
+
+```java
+@Entity
+@Table(name = "pizza_order")
+public class OrderEntity {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id_order", nullable = false)
+    private Integer idOrder;
+
+    @Column(name = "id_customer", nullable = false, length = 15)
+    private String idCustomer;
+
+    @Column(nullable = false, columnDefinition = "DATETIME")
+    private LocalDateTime date;
+
+    @Column(nullable = false, columnDefinition = "DECIMAL(6,2)")
+    private Double total;
+
+    @Column(nullable = false, columnDefinition = "CHAR(1)")
+    private String method;
+
+    @Column(name = "additional_notes", length = 200)
+    private String additionalNotes;
+}
+
+```
+
+- **Importante**: En caso de atributos que representen fechas o precios, es crucial definir correctamente los tipos de datos con `columnDefinition`.
+- **Aclaración**: Atributos como `additionalNotes` permiten `null`, lo que implica que no es necesario anotar con `nullable` si no afecta el diseño.
+
+### **¿Qué librerías se utilizan?**
+
+Se hace uso de las librerías proveídas por **Jakarta** para la gestión de persistencia y entidades. Esto es esencial al migrar desde JavaX. Herramientas como **Lombok** pueden facilitar la creación de getters y setters sin complicar el código con `@Data` cuando no es necesario, especialmente para prácticas más refinadas en ORM.
+
+```java
+@Getter
+@Setter
+@NoArgsConstructor
+public class PizzaEntity {
+    // Atributos y configuración
+}
+
+```
+
+### **¿Por qué es importante definir estrategias y validaciones?**
+
+Definir estrategias para la generación de valores, como con `strategy = GenerationType.IDENTITY`, es vital para garantizar que la base de datos maneje eficientemente los IDs. La validación de datos a nivel de base de datos mediante constraints como `nullable = false` y `unique = true` protege la integridad del modelo.
+
+### **¿Cómo probar la creación automática de tablas?**
+
+Después de definir las entidades y configurarlas con Hibernate, al ejecutar la aplicación, las tablas deberían generarse automáticamente. Esto se puede confirmar si en el log de la consola Hibernate muestra mensajes de `create table` indicando la creación de `pizza` y `pizza_order`.
+
+### **¿Puedes implementar otras entidades?**
+
+Te invito a que crees las entidades restantes, `Customer` y `OrderItem`, aplicando los conceptos discutidos aquí. Un desafío adicional es implementar las claves primarias compuestas para `OrderItem`. ¡No te desanimes si encuentras dificultades! Aprender y explorar nuevas técnicas es parte del viaje del desarrollo de software.
+
+
+
+# 05-Relaciones entre Entidades en JPA: OneToOne, ManyToOne, OneToMany
+
+Creado: 7 de octubre de 2025 18:19
+ítem principal: 02-PRIMEROS PASOS (https://www.notion.so/02-PRIMEROS-PASOS-281f5b42f770809ba8def15039bfc3d1?pvs=21)
+
+## **¿Cómo se traducen las relaciones a entidades con anotaciones en JPA?**
+
+El mapeo de relaciones en JPA (Java Persistence API) es una pieza esencial para trabajar con bases de datos relacionales. En esta guía, exploraremos cómo implementar diferentes tipos de relaciones entre entidades usando anotaciones como `@OneToOne`, `@ManyToOne` y `@OneToMany`.
+
+El objetivo es que puedas entender cómo estas relaciones se representan en el código para que puedan interactuar eficazmente durante las operaciones de manipulación de datos.
+
+### **¿Cuáles son los tipos de relaciones más comunes?**
+
+Antes de adentrarnos en el código, recordemos los cuatro tipos de tablas que discutimos:
+
+1. **Uno a Uno**: Se representa mediante `@OneToOne`. En nuestro caso, la relación es entre `OrderItem` y `Pixsa`, lo que significa que cada `OrderItem` está asociado con un solo `Pixsa`.
+2. **Uno a Muchos**: Se logra con `@OneToMany`. `PixsaOrder` puede contener muchos `OrderItems`.
+3. **Muchos a Uno**: Utiliza `@ManyToOne`. Este tipo de relación también se observa entre `OrderItem` y `PixsaOrder`, donde múltiples `OrderItems` pueden asociarse a una sola orden.
+
+Un ejemplo práctico de los códigos de anotaciones es fundamental para visualizar mejor estas relaciones:
+
+```java
+// Relación Uno a Uno
+@OneToOne
+@JoinColumn(name = "id_pizza", referencedColumnName = "id_pizza", insertable = false, updatable = false)
+private PizzaEntity pizza;
+
+```
+
+```java
+// Relación Muchos a Uno
+@ManyToOne
+@JoinColumn(name = "idOrder", referencedColumnName = "idOrder", insertable = false, updatable = false)
+private OrderEntity order;
+
+```
+
+### **¿Cómo se trabaja con claves primarias compuestas?**
+
+Creación de claves compuestas es otra parte vital del trabajo con JPA, donde dos o más atributos forman una clave primaria:
+
+- Utilizar la anotación `@IdClass` es esencial para gestionar estas claves compuestas.
+
+Ejemplo de cómo definimos varias claves:
+
+```java
+@IdClass(OrderItemId.class) // Define la clase de clave compuesta
+public class OrderItemEntity {
+
+    @Id
+    private Integer idOrder;
+
+    @Id
+    private Integer idItem;
+
+    // Métodos adicionales (equals, hashCode) para asegurar consistencia
+}
+
+```
+
+### **¿Cómo se implementan las anotaciones para asegurar integridad referencial?**
+
+En la integración de estas relaciones, la integridad y el rendimiento son cruciales. Utilizar `@JoinColumn` es importante. Se usa para especificar la columna a través de la cual están vinculadas dos tablas.
+
+Por ejemplo, se puede definir la relación `OneToMany` como sigue:
+
+```java
+@OneToMany(mappedBy = "order")
+private List<OrderItemEntity> items;
+
+```
+
+Aquí, `mappedBy` se utiliza para definir la relación en el lado no propietario. En nuestra aplicación, el `OrderEntity` es el lado no propietario, y `OrderItemEntity` la tabla hija donde se originan muchas instancias desde una sola orden.
+
+### **¿Cuáles son las recomendaciones para el uso de estas relaciones?**
+
+Al crear relaciones, es clave tener en cuenta el impacto en el desempeño de la aplicación. No siempre es necesario crear relaciones bidireccionales o añadir todas las posibles relaciones que se puedan modelar.
+
+1. **Simplificar consultas**: Mediante consultas `{query}` o repositorios de Spring, se pueden derivar datos sin necesidad de establecer relaciones directas en todos los contextos.
+2. **Evitar sobrecarga**: Solo se deben crear las relaciones que sean necesarias estrictamente para garantizar el rendimiento óptimo y la reducción de carga.
+
+Crear relaciones en JPA es esencial para lograr una interacción efectiva entre entidades y bases de datos. Los conceptos discutidos, como el uso de anotaciones y claves compuestas, te posicionan mejor para desarrollar aplicaciones robustas que gestionan eficientemente los datos.
+
+Sigue explorando y aplicando estos principios para afianzarte en el desarrollo backend utilizando JPA. ¡Tu maestría en estos conceptos solo puede mejorar y refinándose!
+
+
+
+# 06-Consultas SQL con JDBC Template en Spring Boot
+
+Creado: 7 de octubre de 2025 19:57
+ítem principal: 02-PRIMEROS PASOS (https://www.notion.so/02-PRIMEROS-PASOS-281f5b42f770809ba8def15039bfc3d1?pvs=21)
+
+```sql
+-- TRUNCATE TABLES
+SET FOREIGN_KEY_CHECKS = 0;
+TRUNCATE `pizzeria`.`order_item`;
+TRUNCATE `pizzeria`.`pizza_order`;
+TRUNCATE `pizzeria`.`customer`;
+TRUNCATE `pizzeria`.`pizza`;
+SET FOREIGN_KEY_CHECKS = 1;
+
+-- INSERT CUSTOMERS
+INSERT INTO `pizzeria`.`customer` (`id_customer`, `name`, `address`, `email`, `phone_number`)
+VALUES
+("863264988","Drake Theory","P.O. Box 136, 4534 Lacinia St.","draketheory@hotmail.com","(826) 607-2278"),
+("617684636","Alexa Morgan","Ap #732-8087 Dui. Road","aleximorgan@hotmail.com","(830) 212-2247"),
+("474771564","Johanna Reigns","925-3988 Purus. St.","johareigns@outlook.com","(801) 370-4041"),
+("394022487","Becky Alford","P.O. Box 341, 7572 Odio Rd.","beckytwobelts@icloud.com","(559) 398-7689"),
+("885583622","Brock Alford","9063 Aliquam, Road","brockalford595@platzi.com","(732) 218-4844"),
+("531254932","Clarke Wyatt","461-4278 Dignissim Av.","wyattplay@google.co","(443) 263-8555"),
+("762085429","Cody Rollins","177-1125 Consequat Ave","codyforchamp@google.com","(740) 271-3631"),
+("363677933","Bianca Neal","Ap #937-4424 Vestibulum. Street","bianca0402@platzi.com","(792) 406-8858"),
+("192758012","Drew Watson","705-6031 Aliquam Street","wangwatson@icloud.com","(362) 881-5943"),
+("110410415","Mercedes Balor","Ap #720-1833 Curabitur Av.","mercedesbalorclub@hotmail.com","(688) 944-6619"),
+("262132898","Karl Austin","241-9121 Fames St.","stonecold@icloud.com","(559) 596-3381"),
+("644337170","Sami Rollins","Ap #308-4700 Mollis Av.","elgenerico@outlook.com","(508) 518-2967"),
+("782668115","Charlotte Riddle","Ap #696-6846 Ullamcorper Avenue","amityrogers@outlook.com","(744) 344-7768"),
+("182120056","Matthew Heyman","Ap #268-1749 Id St.","heymanboss@hotmail.com","(185) 738-9267"),
+("303265780","Shelton Owens","Ap #206-5413 Vivamus St.","figthowens@platzi.com","(821) 880-6661");
+
+-- INSERT PIZZAS
+INSERT INTO `pizzeria`.`pizza` (`id_pizza`, `name`, `description`, `price`, `vegetarian`, `vegan`, `available`)
+VALUES
+(1,"Pepperoni", "Pepperoni, Homemade Tomato Sauce & Mozzarella.", 23.0, 0, 0, 1),
+(2,"Margherita", "Fior de Latte, Homemade Tomato Sauce, Extra Virgin Olive Oil & Basil.", 18.5, 1, 0, 1),
+(3,"Vegan Margherita", "Fior de Latte, Homemade Tomato Sauce, Extra Virgin Olive Oil & Basil.", 22.0, 1, 1, 1),
+(4,"Avocado Festival", "Hass Avocado, House Red Sauce, Sundried Tomatoes, Basil & Lemon Zest.", 19.95, 1, 0, 1),
+(5,"Hawaiian", "Homemade Tomato Sauce, Mozzarella, Pineapple & Ham.", 20.5, 0, 0, 0),
+(6,"Goat Chesse", "Portobello Mushrooms, Mozzarella, Parmesan & Goat Cheeses with Alfredo Sauce.", 24.0, 0, 0, 1),
+(7,"Mother Earth", "Artichokes, Roasted Peppers, Rapini, Sundried Tomatoes, Onion, Shaved Green Bell Peppers & Sunny Seasoning.", 19.5, 1, 0, 1),
+(8,"Meat Lovers", "Mild Italian Sausage, Pepperoni, Bacon, Homemade Tomato Sauce & Mozzarella.", 21.0, 0, 0, 1),
+(9,"Marinated BBQ Chicken", "Marinated Chicken with Cilantro, Red Onions, Gouda, Parmesan & Mozzarella Cheeses.", 20.95, 0, 0, 0),
+(10,"Truffle Cashew Cream", "Wild mushrooms, Baby Kale, Shiitake Bacon & Lemon Vinaigrette. Soy free.", 22.0, 1, 1, 1),
+(11,"Rico Mor", "Beef Chorizo, Sundried Tomatoes, Salsa Verde, Pepper, Jalapeno & pistachios", 23.0, 0, 0, 1),
+(12,"Spinach Artichoke", "Fresh Spinach, Marinated Artichoke Hearts, Garlic, Fior de Latte, Mozzarella & Parmesan.", 18.95, 1, 0, 1);
+
+-- INSERT ORDERS
+INSERT INTO `pizzeria`.`pizza_order` (`id_order`, `id_customer`, `date`, `total`, `method`, `additional_notes`)
+VALUES
+(1, "192758012", DATE_SUB(NOW(), INTERVAL 5 DAY), 42.95, "D", "Don't be late pls."),
+(2, "474771564", DATE_SUB(NOW(), INTERVAL 4 DAY), 62.0, "S", null),
+(3, "182120056", DATE_SUB(NOW(), INTERVAL 3 DAY), 22.0, "C", null),
+(4, "617684636", DATE_SUB(NOW(), INTERVAL 2 DAY), 42.0, "S", null),
+(5, "192758012", DATE_SUB(NOW(), INTERVAL 1 DAY), 20.5, "D", "Please bring the jalapeños separately."),
+(6, "782668115", NOW(), 23, "D", null);
+
+-- INSERT ORDER ITEMS
+INSERT INTO `pizzeria`.`order_item` (`id_order`, `id_item`, `id_pizza`, `quantity`, `price`)
+VALUES
+(1, 1, 1, 1, 23.0),
+(1, 2, 4, 1, 19.95),
+(2, 1, 2, 1, 18.5),
+(2, 2, 6, 1, 24.0),
+(2, 3, 7, 1, 19.5),
+(3, 1, 3, 1, 22.0),
+(4, 1, 8, 2, 42.0),
+(5, 1, 10, 0.5, 11.0),
+(5, 2, 12, 0.5, 9.5),
+(6, 1, 11, 1, 23);
+```
+
+## **¿Cómo empezar a trabajar con la información de la base de datos?**
+
+Para comenzar a gestionar la información almacenada en una base de datos, es fundamental tener una comprensión clara de cómo los datos están estructurados y cómo se pueden consultar eficientemente. El uso de herramientas adecuadas facilita la carga y consulta de datos de manera ordenada. En esta sesión, trabajaremos con consultas SQL a través de `JDBC Template` en un entorno Java, lo que nos permitirá explorar y manipular nuestra base de datos de manera efectiva.
+
+### **¿Cómo realizar consultas con JDBC Template?**
+
+El `JDBC Template` es una poderosa herramienta que permite realizar consultas SQL y mapear los resultados a clases Java. Este enfoque nos brinda flexibilidad y control sobre las interacciones con la base de datos. A continuación, mostramos cómo crear un método para consultar todas las pizzas en nuestra pizzería.
+
+```java
+@Service
+public class PizzaService {
+
+    private final JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    public PizzaService(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+    }
+
+    public List<PizzaEntity> getAll() {
+        return this.jdbcTemplate.query(
+            "SELECT * FROM pizza",
+            new BeanPropertyRowMapper<>(PizzaEntity.class)
+        );
+    }
+}
+
+```
+
+1. **Definición del Servicio**: Utilizamos la anotación `@Service` para marcar nuestra clase como un servicio dentro del ciclo de vida de Spring.
+2. **Uso de JdbcTemplate**: Declaramos e inyectamos `JdbcTemplate` para manejar las consultas SQL.
+3. **Método de Consulta**: Creamos un método `getAll` que usa una consulta SQL para recuperar todas las entradas de la tabla `pizza` y mapearlas a objetos `PizzaEntity`.
+
+### **¿Cómo exponer consultas a través de un controlador REST?**
+
+Para hacer las consultas accesibles a través de un API RESTful, necesitamos un controlador que gestione las solicitudes HTTP. Aquí explicamos cómo exponer las pizzas a través de un endpoint REST.
+
+```java
+@RestController
+@RequestMapping("/api/pizzas")
+public class PizzaController {
+
+    private final PizzaService pizzaService;
+
+    @Autowired
+    public PizzaController(PizzaService pizzaService) {
+        this.pizzaService = pizzaService;
+    }
+
+    @GetMapping
+    public ResponseEntity<List<PizzaEntity>> getAll() {
+        return ResponseEntity.ok(this.pizzaService.getAll());
+    }
+}
+
+```
+
+1. **Definición del Controlador**: Utilizamos `@RestController` para definir un controlador REST que maneja solicitudes HTTP.
+2. **Configuración del Ruteo**: Con `@RequestMapping` establecemos `/api/pizzas` como el path para el API.
+3. **Método Get**: Usamos `@GetMapping` para especificar que este método responderá a solicitudes GET, devolviendo una lista de pizzas.
+
+Ahora, al enviar una petición GET a `http://localhost:8080/api/pizzas`, podremos obtener un listado de todas las pizzas disponibles en la base de datos.
+
+### **¿Cómo realizar consultas filtradas?**
+
+Si queremos obtener un subconjunto específico de datos, podemos modificar nuestra consulta SQL añadiendo condiciones `WHERE`. Por ejemplo, para recuperar solo las pizzas que no están disponibles:
+
+```java
+public List<PizzaEntity> getUnavailablePizzas() {
+    return this.jdbcTemplate.query(
+        "SELECT * FROM pizza WHERE available = 0",
+        new BeanPropertyRowMapper<>(PizzaEntity.class)
+    );
+}
+
+```
+
+1. **Consulta Condicional**: Filtramos las pizzas añadiendo la condición `WHERE available = 0`.
+2. **Modificación del Método**: Creamos un nuevo método `getUnavailablePizzas` para encapsular esta lógica y facilitar su reutilización.
+
+### **Pruebas con herramientas como Postman**
+
+Una vez configurado el servicio y el controlador, es esencial probar nuestras consultas y el API RESTful. Utilizamos herramientas como Postman para enviar solicitudes y verificar respuestas. También se pueden realizar cambios dinámicos en las consultas y probar los resultados inmediatamente después.
+
+Este enfoque nos permite mantener un flujo efectivo de desarrollo y pruebas, asegurando que las consultas funcionen según lo esperado en un entorno real.
+
+Con estas técnicas y herramientas, ahora estás listo para realizar consultas básicas y avanzadas a tu base de datos usando Java y Spring. Continúa explorando y experimentando con consultas para mejorar tu conocimiento y habilidades en el desarrollo de aplicaciones.
+
+
+
+
+
