@@ -633,4 +633,80 @@ El enfoque robusto y flexible de los Spring Data Repositories tiene un impacto s
 
 
 
+# 08-Guardar y Actualizar Registros con Spring Data Repositories
+
+Creado: 8 de octubre de 2025 0:50
+ítem principal: 03-SPRING DATA REPOSITORIES (https://www.notion.so/03-SPRING-DATA-REPOSITORIES-281f5b42f770806c884ce10c3f0d7fd3?pvs=21)
+
+## **¿Cómo guardar una nueva pizza en la base de datos?**
+
+El mundo del desarrollo de software con Spring Data Repositories tiene un objetivo claro: simplificar los procesos. Imagina lo fácil que es ahora trabajar con bases de datos gracias a las funcionalidades CRUD que estas herramientas nos ofrecen. En esta ocasión, te guiaré en cómo crear un nuevo registro de pizza en la base de datos usando Spring Repositories. Vamos al grano con ejemplos prácticos.
+
+Para comenzar, necesitamos crear un método en `PizzaService`. Este método será público, retornará un objeto de tipo `PizzaEntity` y lo llamaremos `save`. Aquí está el fragmento de código para hacer esto:
+
+```java
+public PizzaEntity save(PizzaEntity pizza) {
+    return this.pizzaRepository.save(pizza);
+}
+
+```
+
+Con una simple línea, logramos insertar un elemento en la base de datos. ¿No es increíble?
+
+## **¿Cómo gestionar peticiones POST en el controlador?**
+
+Ahora, en el `PizzaController`, necesitamos un método similar al anterior pero enfocado en manejar las peticiones POST. Aquí es donde el concepto de manejo de solicitudes HTTP cobra vida. Renombraremos este método a `add` y lo anotaremos con `@PostMapping` para que reciba peticiones del tipo POST. Además, usaremos `@RequestBody` para capturar el cuerpo de la solicitud que incluirá la entidad `PizzaEntity`.
+
+```java
+@PostMapping("/add")
+public PizzaEntity add(@RequestBody PizzaEntity pizza) {
+    return this.pizzaService.save(pizza);
+}
+
+```
+
+Cuando hacemos una petición POST a nuestro endpoint, estaremos enviando un JSON con los detalles de la pizza. Por ejemplo: nombre, descripción, precio, si es vegana o vegetariana, y su disponibilidad.
+
+Al lanzar la aplicación y enviar esta solicitud, podrás ver que la respuesta te devuelve la pizza creada, con un campo `ID` que no teníamos antes. Esto es porque el ID se genera automáticamente al guardar el registro.
+
+## **¿Cómo manejar actualizaciones de registros existentes?**
+
+Sin embargo, no siempre queremos agregar una nueva pizza; a veces, solo necesitamos actualizar una existente. Aquí es donde Spring Data brilla al verificar si la información en la base de datos cambió. De no ser así, evita actualizar para ahorrar recursos.
+
+Para diferenciar entre crear y actualizar, proponemos crear un método en `PizzaController` llamado `update`. Adornado con `@PutMapping`, este método decidirá entre requerir un `POST` para guardar datos nuevos y un `PUT` para actualizaciones. Incluiremos aquí también la verificación de existencia de pizzas con una llamada a `existsById`.
+
+```java
+@PutMapping("/update")
+public ResponseEntity<?> update(@RequestBody PizzaEntity pizza) {
+    if (pizza.getIdPizza() != null && this.pizzaService.exists(pizza.getIdPizza())) {
+        return new ResponseEntity<>(this.pizzaService.save(pizza), HttpStatus.OK);
+    }
+    return new ResponseEntity<>("Pizza not found or invalid request", HttpStatus.BAD_REQUEST);
+}
+
+```
+
+Este ejemplo muestra cómo validar si la pizza ya existe antes de proceder. En caso contrario, retorna un error `400 Bad Request`.
+
+Spring, gracias al `save`, internamente decide entre un `INSERT` para registros nuevos o un `UPDATE` para actualizaciones.
+
+## **¿Qué ventajas nos otorgan los Spring Data Repositories?**
+
+Lo maravilloso de Spring Data es que automatiza muchas operaciones cruciales, como detectar cambios en la información almacenada. Además, si una pizza ya existe, no ejecutará una acción innecesaria.
+
+Dentro del servicio, hemos creado un método `exists` que retorna un booleano:
+
+```java
+public boolean exists(Long idPizza) {
+    return this.pizzaRepository.existsById(idPizza);
+}
+
+```
+
+Este método hace una consulta `COUNT` y determina si un registro con el ID proporcionado existe. Esta es la magia de Spring Data: facilita las tareas más tediosas y permite que los desarrolladores se concentren más en la lógica de negocios.
+
+Sigue explorando las capacidades de Spring y aprovéchalas en tus proyectos. ¡El aprendizaje es continuo y las oportunidades para mejorar siempre están al alcance!
+
+
+
 

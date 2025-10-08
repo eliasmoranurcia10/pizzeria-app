@@ -3,11 +3,9 @@ package com.example.pizzeria.web.controller;
 import com.example.pizzeria.persistence.entity.PizzaEntity;
 import com.example.pizzeria.service.PizzaService;
 import lombok.AllArgsConstructor;
+import org.apache.coyote.BadRequestException;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -25,5 +23,15 @@ public class PizzaController {
     @GetMapping("/{idPizza}")
     public ResponseEntity<PizzaEntity> get(@PathVariable Integer idPizza) {
         return ResponseEntity.ok(this.pizzaService.get(idPizza));
+    }
+
+    @PostMapping
+    public ResponseEntity<PizzaEntity> add(@RequestBody PizzaEntity pizza) throws BadRequestException {
+        return ResponseEntity.ok(this.pizzaService.save(pizza));
+    }
+
+    @PutMapping
+    public ResponseEntity<PizzaEntity> update(@RequestBody PizzaEntity pizza) throws BadRequestException {
+        return ResponseEntity.ok(this.pizzaService.update(pizza));
     }
 }
