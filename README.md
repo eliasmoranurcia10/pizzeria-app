@@ -784,4 +784,72 @@ El poder de Spring Data Repositories radica en su capacidad para simplificar la 
 
 
 
+# 10-Gestión de Relaciones en JPA: Lazy vs Eager Fetching
+
+Creado: 8 de octubre de 2025 14:35
+ítem principal: 03-SPRING DATA REPOSITORIES (https://www.notion.so/03-SPRING-DATA-REPOSITORIES-281f5b42f770806c884ce10c3f0d7fd3?pvs=21)
+
+## **¿Cómo gestionar las relaciones entre entidades en una base de datos?**
+
+Al crear aplicaciones complejas, frecuentemente las entidades en una base de datos comparten relaciones. Estas pueden ser de uno a uno (1:1), muchos a uno (M:1) o uno a muchos (1:M), entre otras. Es vital entender cómo recuperar dichas relaciones, dado que un mal manejo puede afectar severamente el rendimiento de una aplicación. Un manejo eficiente permite evitar accesos innecesarios o sobrecarga de datos.
+
+### **¿Cómo crear y configurar un repositorio para las órdenes?**
+
+Primero, deberemos crear un nuevo repositorio para manejar las órdenes. Para esto, seguiremos los pasos a continuación:
+
+1. **Crear la interfaz OrderRepository**:
+    - Extender de `JpaRepository`.
+    - Usar `OrderEntity` como la entidad y `Integer` como tipo de clave primaria.
+2. **Agregar anotaciones necesarias**:
+    - Incluir `@Getter`, `@Setter` y `@NoArgsConstructor` en nuestras entidades Java para evitar problemas de serialización JSON.
+
+Esta configuración inicial nos proporcionará acceso a métodos predeterminados para gestionar las órdenes sin tener que escribir código adicional.
+
+### **¿Cómo usar los servicios REST para exponer datos?**
+
+A continuación, implementaremos el servicio y el controlador:
+
+1. **Crear el servicio OrderService**:
+    - Anotarlo con `@Service`.
+    - Inyectar el repositorio en el constructor (uso de `final` para asegurar la inyección por constructor).
+    - Crear un método para recuperar todas las órdenes usando `findAll()`.
+2. **Crear el controlador OrderController**:
+    - Utilizar `@RestController`.
+    - Atender peticiones en `API/orders` con `@GetMapping`.
+    - Retornar una respuesta `OK` con la lista de órdenes.
+
+### **¿Cómo solucionar problemas de serialización con JSON?**
+
+Un problema común al serializar entidades es el ciclo infinito causado por relaciones bidireccionales entre entidades, como ocurrió con `OrderEntity` y `OrderItemEntity`. Esto sucede cuando cada entidad intenta cargar los datos de la otra recursivamente. Para resolverlo, podemos:
+
+- Anotar las propiedades de las entidades con `@JsonIgnore` para evitar que ciertas relaciones sean serializadas.
+
+### **¿Cuándo usar Lazy y Eager en las relaciones?**
+
+Las propiedades de `FetchType` determinan cómo se recuperan las relaciones:
+
+- **Lazy**: Retrasa la carga de datos hasta que sean específicamente solicitados. Es útil cuando no necesitamos la relación inmediatamente.
+- **Eager**: Carga la relación al mismo tiempo que la entidad principal. Usada cuando la relación es vital para el funcionamiento de la operación actual.
+
+Ejemplo de configuración:
+
+- Usar `@ManyToOne(fetch = FetchType.LAZY)` para relaciones como cliente en una orden, donde no siempre es necesario cargar la información del cliente.
+- Usar `@OneToMany(fetch = FetchType.EAGER)` para ítems de una orden, si estos son cruciales para procesar cada orden.
+
+### **¿Cómo optimizar la recuperación de relaciones?**
+
+De manera predeterminada, JPA y Hibernate gestionan las siguientes configuraciones por tipo de relación:
+
+- **OneToMany** y **ManyToMany**: Por defecto son Lazy.
+- **ManyToOne** y **OneToOne**: Por defecto son Eager.
+
+Recomendaciones generales:
+
+- Limitar la carga de relaciones a solo las necesarias.
+- Configurar relaciones cómo Lazy siempre que sea posible para mejorar el rendimiento.
+- Si una relación es ampliamente usada, considerar marcarla como Eager.
+
+Con una comprensión clara sobre cómo y cuándo aplicar Lazy o Eager, así como gestionar adecuadamente las relaciones entre entidades, estarás equipado para optimizar el rendimiento y funcionamiento de tu aplicación. ¡Sigue aprendiendo y perfeccionando estos conceptos en tus proyectos!
+
+
 
