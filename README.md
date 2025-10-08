@@ -546,5 +546,91 @@ Con estas técnicas y herramientas, ahora estás listo para realizar consultas b
 
 
 
+# 07-Uso de Spring Data Repositories para Gestión de Datos
+
+Creado: 7 de octubre de 2025 20:15
+ítem principal: 03-SPRING DATA REPOSITORIES (https://www.notion.so/03-SPRING-DATA-REPOSITORIES-281f5b42f770806c884ce10c3f0d7fd3?pvs=21)
+
+## **¿Cómo facilitan los Spring Data Repositories la interacción con bases de datos?**
+
+Los Spring Data Repositories son elementos fundamentales para desarrollar aplicaciones en Spring, pues simplifican notablemente el manejo de bases de datos al proporcionar operaciones comunes necesarias. Esta eficiencia se logra a través de tres tipos principales de repositorios: CRUD Repository, Paging and Sorting Repository y JPA Repository. Estos repositorios no solo reducen la escritura de código repetitivo, sino que también optimizan tiempos de desarrollo y depuración.
+
+### **¿Cuáles son los tipos de Spring Repositories y sus funciones?**
+
+1. **CRUD Repository**: Este es el repositorio más utilizado por su capacidad para realizar operaciones de creación, lectura, actualización y eliminación (CRUD) sobre cualquier entidad.
+2. **Paging and Sorting Repository**: Tal como su nombre lo indica, este repositorio permite la paginación y la ordenación de resultados al interactuar con una entidad.
+3. **JPA Repository**: Extiende los dos repositorios anteriores, incluyendo además operaciones específicas de JPA (Java Persistence API) como `flush`, lo que facilita tareas más complejas en la base de datos.
+
+### **¿Cómo iniciar con los Spring Repositories?**
+
+Para comenzar a usar los Spring Repositories, es necesario seguir unos pasos clave:
+
+- Anotar la clase principal, o aquella que tenga la anotación `Spring Boot Application`, con `@EnableJpaRepositories`. Esto indica que se utilizarán repositorios de Spring en la aplicación.
+- Crear una nueva interfaz de repositorio que extienda uno de los repositorios de Spring mencionados. En este caso particular, se utiliza `ListCrudRepository` para que los métodos de obtención de datos devuelvan listas en lugar de iterables, lo que resulta más intuitivo al trabajar con colecciones de datos.
+
+```java
+public interface PizzaRepository extends ListCrudRepository<PizzaEntity, Integer> {
+    // Métodos específicos adicionales pueden ser añadidos aquí
+}
+
+```
+
+### **¿Cómo realizar consultas con Spring Repositories?**
+
+1. **Consultar todos los elementos**:
+    - Usar el método `findAll()` permite obtener todos los registros de una entidad sin necesidad de escribir sentencias SQL manualmente.
+
+```java
+public List<PizzaEntity> getAll(){
+    return this.pizzaRepository.findAll();
+}
+
+```
+
+1. **Consultar por ID**:
+    - Utilizar el método `findById()` permite recuperar un solo registro dado su clave primaria, devolviendo un `Optional` que puede manejarse para verificar la existencia del registro.
+
+```java
+public PizzaEntity get(Integer idPizza) {
+    return this.pizzaRepository.findById(idPizza).orElse(null);
+}
+
+```
+
+### **¿Cómo configurar controladores para manejar solicitudes?**
+
+Para exponer estas funcionalidades a través de una API REST, podemos configurar controladores que gestionen las peticiones HTTP y proporcionen los datos adecuados desde la base de datos.
+
+- Definir rutas que respondan a métodos HTTP como GET para obtener listas o elementos individuales según un `ID`.
+
+```java
+@RestController
+@RequestMapping("/api/pizzas")
+@AllArgsConstructor
+public class PizzaController {
+    private final PizzaService pizzaService;
+
+    @GetMapping
+    public ResponseEntity<List<PizzaEntity>> getAll() {
+        return ResponseEntity.ok(this.pizzaService.getAll());
+    }
+
+    @GetMapping("/{idPizza}")
+    public ResponseEntity<PizzaEntity> get(@PathVariable Integer idPizza) {
+        return ResponseEntity.ok(this.pizzaService.get(idPizza));
+    }
+}
+
+```
+
+### **¿Cuáles son las ventajas de usar Spring Repositories?**
+
+- **Reducción de Código**: Elimina la necesidad de escribir la lógica detallada del acceso a datos, permitiendo centrarse en la lógica de negocios.
+- **Consistencia y Simplicidad**: Provee una interfaz común y métodos estándar para todas las operaciones básicas sobre los datos.
+- **Escalabilidad y Flexibilidad**: Facilitan el manejo y la ampliación de la funcionalidad para incluir paginación, ordenación y más, ajustándose a las necesidades del proyecto.
+
+El enfoque robusto y flexible de los Spring Data Repositories tiene un impacto significativo en la eficiencia y eficacia del desarrollo de aplicaciones con bases de datos, motivándote a seguir explorando y aplicando estas herramientas en tus proyectos futuros.
+
+
 
 

@@ -1,6 +1,7 @@
 package com.example.pizzeria.service;
 
 import com.example.pizzeria.persistence.entity.PizzaEntity;
+import com.example.pizzeria.persistence.repository.PizzaRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -11,9 +12,13 @@ import java.util.List;
 @Service
 @AllArgsConstructor
 public class PizzaService {
-    private final JdbcTemplate jdbcTemplate;
+    private final PizzaRepository pizzaRepository;
 
     public List<PizzaEntity> getAll(){
-        return this.jdbcTemplate.query("select * from pizza where available=0", new BeanPropertyRowMapper<>(PizzaEntity.class));
+        return this.pizzaRepository.findAll();
+    }
+
+    public PizzaEntity get(Integer idPizza) {
+        return this.pizzaRepository.findById(idPizza).orElse(null);
     }
 }
