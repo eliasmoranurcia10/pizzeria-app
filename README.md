@@ -872,4 +872,75 @@ public interface PizzaRepository extends ListCrudRepository<PizzaEntity, Integer
 ```
 
 
+# 12-Filtrado de Pizzas por Ingredientes usando Query Methods
+
+Creado: 9 de octubre de 2025 13:21
+ítem principal: 03-SPRING DATA REPOSITORIES (https://www.notion.so/03-SPRING-DATA-REPOSITORIES-281f5b42f770806c884ce10c3f0d7fd3?pvs=21)
+
+## **¿Cómo utilizar los keywords contains y not en query methods?**
+
+La búsqueda de datos precisa y la manipulación efectiva son habilidades esenciales para cualquier desarrollo de software. En este caso, aprenderemos a usar los keywords `contains` y `not` para construir query methods que nos permiten extraer información específica de nuestros datos. Analizaremos cómo aplicarlos en una base de datos de pizzas identificando ingredientes específicos y controlando sensibilidades de mayúsculas y minúsculas en las consultas.
+
+### **¿Cómo recuperar pizzas disponibles con ciertos ingredientes?**
+
+Para recuperar pizzas que están disponibles y contienen ciertos ingredientes, podemos utilizar el método 
+
+`*List*<PizzaEntity> findAllByAvailableTrueAndDescriptionContainingIgnoreCase(String description);`
+
+Aquí los detalles:
+
+- **Método del servicio:** Se define un método público que retorna una lista de entidades de Pizza y recibe como parámetro un ingrediente.
+- **Implementación:** Se invoca el método del repositorio `findAllByAvailableTrueAndDescriptionContainingIgnoreCase`, pasándole el ingrediente. Este método ignora la diferencia entre mayúsculas y minúsculas gracias a `IgnoreCase`.
+- **Consulta API:** Exponer esta funcionalidad a través de un endpoint en el API REST, permitiendo obtener pizzas por ingrediente solicitando vía HTTP.
+
+```java
+// Service
+public List<PizzaEntity> getWith(String ingredient) {
+    return this.pizzaRepository.findAllByAvailableTrueAndDescriptionContainingIgnoreCase(ingredient);
+}
+
+// Controller
+@GetMapping("/with/{ingredient}")
+public ResponseEntity<List<PizzaEntity>> getWith(@PathVariable String ingredient) {
+    return ResponseEntity.ok(this.pizzaService.getWith(ingredient));
+}
+
+```
+
+### **¿Cómo obtener pizzas que no contienen un ingrediente específico?**
+
+Si necesitamos exactamente el resultado opuesto, pizzas que no contengan un ingrediente en particular, podemos modificar ligeramente el query method utilizando `not`.
+
+- **Ajustar Query Method:** Inserta `not` después de `description` y antes de `containing` para indicar que buscamos pizzas que no tienen el ingrediente proporcionado.
+- **Consulta API:** Similar al anterior, se expone esta funcionalidad a través de otro endpoint.
+
+```java
+@GetMapping("/without/{ingredient}")
+public ResponseEntity<List<PizzaEntity>> getWithOut(@PathVariable String ingredient) {
+    return ResponseEntity.ok(this.pizzaService.getWithOut(ingredient));
+}
+
+```
+
+### **¿Cómo traducir query methods a SQL?**
+
+Los query methods se traducen de manera automática al dialecto específico de SQL de la base de datos que estés utilizando. Por ejemplo, para obtener pizzas disponibles cuya descripción no contiene un ingrediente, el query traducido sería:
+
+```sql
+SELECT * FROM pizza WHERE available = 1 AND UPPER(description) NOT LIKE UPPER(?)
+
+```
+
+En este caso, el `ignoreCase` se refleja en el uso de `UPPER` para ignorar mayúsculas y minúsculas en la búsqueda.
+
+### **Recomendaciones prácticas para implementar query methods**
+
+- **Uso de `ignoreCase`:** Siempre que sea posible, utiliza parámetros como `ignoreCase` para hacer tus consultas más flexibles y evitar problemas por diferencias de capitalización.
+- **Nombres convencionales:** Adopta convenciones de nombres como `finalBy` para mejorar la legibilidad y mantenibilidad del código.
+- **Probar resultados:** Usa herramientas como Postman para testear tus endpoints y verificar la funcionalidad en diferentes escenarios y bases de datos.
+
+Con estas prácticas y ejemplos podrás manipular y consultar datos de manera más precisa y eficiente, abriendo el camino para desarrollos más robustos y adaptables. ¡Continúa explorando y ampliando tus conocimientos sobre bases de datos y query methods!
+
+
+
 
