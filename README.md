@@ -101,7 +101,7 @@ Esta estructura te permitirá organizar tu código de forma clara y eficiente, e
 
 - Al trabajar con **Lombok**, asegúrate de tener el plugin relevante instalado en IntelliJ para aprovechar al máximo sus características.
 - Siempre verifica que tu entorno de desarrollo esté correctamente configurado para evitar errores de compilación relacionados con la versión de Java.
-- Aunque estos pasos se centran en un entorno de desarrollo específico, los principios son aplicables a otras IDEs populares.
+- Aunque estos pasos se centran en un entorno de desarrollo específico, los principios son aplicables a otras Ides populares.
 
 Con esta guía, estás listo para comenzar a desarrollar tu aplicación Spring de manera eficiente. Mantente atento en las próximas secciones para aprender cómo conectar tu aplicación y darle vida a tus servicios web.
 
@@ -120,16 +120,16 @@ Nuestro modelo de entidad-relación para la base de datos del proyecto de pizzer
     - **ID de pizza:** Identificador único de cada pizza.
     - **Nombre y descripción:** Información detallada de la pizza.
     - **Precio:** Tipo decimal 5,2 (cinco dígitos en total, dos después del punto).
-    - **Atributos booleanos:** Identificación de si la pizza es vegetariana, vegana o está disponible mediante el uso de columnas `tinyint`.
+    - **Atributos booleanos:** Identificación de la pizza es vegetariana, vegana o está disponible mediante el uso de columnas `tinyint`.
 - **Tabla `pizza_order`:**
-    - **ID de orden:** Identificador único de cada orden.
+    - **Id de orden:** Identificador único de cada orden.
     - **Relación con `customer`:** Usando `ID customer` como clave foránea.
     - **Fecha de la orden:** Registro temporal de la creación de la orden.
     - **Valor total:** Suma del costo de todas las pizzas en la orden.
     - **Método de entrega:** Almacena en un carácter si la orden es para llevar, recoger o para comer en el lugar.
     - **Notas adicionales:** Registro para observaciones específicas del cliente sobre la orden.
 - **Tabla `customer`:**
-    - **ID de cliente:** Identificación única de cada cliente.
+    - **Id de cliente:** Identificación única de cada cliente.
     - **Datos del cliente:** Incluye nombre, dirección, email y número de teléfono.
 - **Tabla `order_item`:**
     - **Relación uno a uno con `pizza`:** Cada ítem de la orden tiene un enlace a una pizza específica.
@@ -179,7 +179,7 @@ Estas configuraciones permiten que la estructura de las bases de datos se actual
 
 ## **¿Cómo adaptar la nueva interfaz de `IntelliJ IDEA`?**
 
-Finalmente, para aprovechar las actualizaciones de `IntelliJ IDEA` en su interfaz, podemos activar la "New UI" en `Appearance & Behavior`. Esto nos permitirá familiarizarnos con una interfaz más moderna y eficiente. Simplemente habilita la interfaz, aplica los cambios y reinicia `IntelliJ IDEA`.
+Finalmente, para aprovechar las actualizaciones de `IntelliJ IDEA` en su interfaz, podemos activar la "New UI" en `Appearance & Behavior`. Esto nos permitirá familiarizarnos con una interfaz más moderna y eficiente. Simplemente, habilita la interfaz, aplica los cambios y reinicia `IntelliJ IDEA`.
 
 Utilizar estas opciones no solo mejora la experiencia de desarrollo, sino que también optimiza la gestión del proyecto en entorno de bases de datos. Al seguir aprendiendo y explorando nuevas herramientas y configuraciones, potencias tu capacidad para crear aplicaciones robustas y eficientes. ¡Sigue adelante y explora más en este emocionante viaje de aprendizaje!
 
@@ -230,7 +230,7 @@ public class PizzaEntity {
 
 ```
 
-- **Paso clave**: Usar la anotación `@Id` junto con `@GeneratedValue` especifica que este campo es la clave primaria y se autoincrementará.
+- **Paso clave**: Usar la anotación `@Id` junto con `@GeneratedValue`  específica que este campo es la clave primaria y se autoincrementará.
 - **Detalles adicionales**: `@Column` permite definir características adicionales de las columnas, como `unique`, `nullable`, `length` y `columnDefinition`.
 
 ### **¿Cómo se crea la entidad OrderEntity?**
@@ -367,7 +367,7 @@ private List<OrderItemEntity> items;
 
 ```
 
-Aquí, `mappedBy` se utiliza para definir la relación en el lado no propietario. En nuestra aplicación, el `OrderEntity` es el lado no propietario, y `OrderItemEntity` la tabla hija donde se originan muchas instancias desde una sola orden.
+Aquí, `mappedBy` se utiliza para definir la relación en el lado no propietario. En nuestra aplicación,  `OrderEntity` es el lado no propietario, y `OrderItemEntity` la tabla hija donde se originan muchas instancias desde una sola orden.
 
 ### **¿Cuáles son las recomendaciones para el uso de estas relaciones?**
 
@@ -462,7 +462,7 @@ Para comenzar a gestionar la información almacenada en una base de datos, es fu
 
 ### **¿Cómo realizar consultas con JDBC Template?**
 
-El `JDBC Template` es una poderosa herramienta que permite realizar consultas SQL y mapear los resultados a clases Java. Este enfoque nos brinda flexibilidad y control sobre las interacciones con la base de datos. A continuación, mostramos cómo crear un método para consultar todas las pizzas en nuestra pizzería.
+Él  `JDBC Template` es una poderosa herramienta que permite realizar consultas SQL y mapear los resultados a clases Java. Este enfoque nos brinda flexibilidad y control sobre las interacciones con la base de datos. A continuación, mostramos cómo crear un método para consultar todas las pizzas en nuestra pizzería.
 
 ```java
 @Service
@@ -491,7 +491,7 @@ public class PizzaService {
 
 ### **¿Cómo exponer consultas a través de un controlador REST?**
 
-Para hacer las consultas accesibles a través de un API RESTful, necesitamos un controlador que gestione las solicitudes HTTP. Aquí explicamos cómo exponer las pizzas a través de un endpoint REST.
+Para hacer las consultas accesibles a través del API RESTful, necesitamos un controlador que gestione las solicitudes HTTP. Aquí explicamos cómo exponer las pizzas a través de un endpoint REST.
 
 ```java
 @RestController
@@ -514,7 +514,7 @@ public class PizzaController {
 ```
 
 1. **Definición del Controlador**: Utilizamos `@RestController` para definir un controlador REST que maneja solicitudes HTTP.
-2. **Configuración del Ruteo**: Con `@RequestMapping` establecemos `/api/pizzas` como el path para el API.
+2. **Configuración del Ruteo**: Con `@RequestMapping` establecemos `/api/pizzas` como el path para API.
 3. **Método Get**: Usamos `@GetMapping` para especificar que este método responderá a solicitudes GET, devolviendo una lista de pizzas.
 
 Ahora, al enviar una petición GET a `http://localhost:8080/api/pizzas`, podremos obtener un listado de todas las pizzas disponibles en la base de datos.
@@ -538,7 +538,7 @@ public List<PizzaEntity> getUnavailablePizzas() {
 
 ### **Pruebas con herramientas como Postman**
 
-Una vez configurado el servicio y el controlador, es esencial probar nuestras consultas y el API RESTful. Utilizamos herramientas como Postman para enviar solicitudes y verificar respuestas. También se pueden realizar cambios dinámicos en las consultas y probar los resultados inmediatamente después.
+Una vez configurado el servicio y el controlador, es esencial probar nuestras consultas y API RESTful. Utilizamos herramientas como Postman para enviar solicitudes y verificar respuestas. También se pueden realizar cambios dinámicos en las consultas y probar los resultados inmediatamente después.
 
 Este enfoque nos permite mantener un flujo efectivo de desarrollo y pruebas, asegurando que las consultas funcionen según lo esperado en un entorno real.
 
@@ -655,7 +655,7 @@ Con una simple línea, logramos insertar un elemento en la base de datos. ¿No e
 
 ## **¿Cómo gestionar peticiones POST en el controlador?**
 
-Ahora, en el `PizzaController`, necesitamos un método similar al anterior pero enfocado en manejar las peticiones POST. Aquí es donde el concepto de manejo de solicitudes HTTP cobra vida. Renombraremos este método a `add` y lo anotaremos con `@PostMapping` para que reciba peticiones del tipo POST. Además, usaremos `@RequestBody` para capturar el cuerpo de la solicitud que incluirá la entidad `PizzaEntity`.
+Ahora, en  `PizzaController`, necesitamos un método similar al anterior pero enfocado en manejar las peticiones POST. Aquí es donde el concepto de manejo de solicitudes HTTP cobra vida. Renombraremos este método a `add` y lo anotaremos con `@PostMapping` para que reciba peticiones del tipo POST. Además, usaremos `@RequestBody` para capturar el cuerpo de la solicitud que incluirá la entidad `PizzaEntity`.
 
 ```java
 @PostMapping("/add")
@@ -716,11 +716,11 @@ Creado: 8 de octubre de 2025 2:14
 
 ## **¿Cómo eliminar un elemento de la base de datos utilizando Crude Repository en Spring?**
 
-Eliminar un elemento de la base de datos es una operación básica pero fundamental en cualquier aplicación. Spring Framework facilita este proceso a través de su Crude Repository, ofreciendo métodos intuitivos y directos para gestionar datos con eficacia. Vamos a explorar cómo puedes eliminar un elemento, en este caso una "pixa", utilizando Spring y su Crude Repository.
+Eliminar un elemento de la base de datos es una operación básica, pero fundamental en cualquier aplicación. Spring Framework facilita este proceso a través de su Crude Repository, ofreciendo métodos intuitivos y directos para gestionar datos con eficacia. Vamos a explorar cómo puedes eliminar un elemento, en este caso una "pixa", utilizando Spring y su Crude Repository.
 
 ### **¿Qué es Crude Repository y cómo ayuda en la eliminación?**
 
-Crude Repository es una interfaz que define operaciones básicas para crear, leer, actualizar y eliminar datos en la base de datos, conocidas como operaciones CRUD (por sus siglas en inglés: Create, Read, Update, Delete). Ya hemos explorado cómo leer y guardar datos con el método `save`, pero ahora nos enfocaremos en la operación de eliminación.
+Crude Repository es una interfaz que define operaciones básicas para crear, leer, actualizar y eliminar datos en la base de datos, conocidas como operaciones CRUD (por sus siglas en inglés: Created, Read, Update, Delete). Ya hemos explorado cómo leer y guardar datos con el método `save`, pero ahora nos enfocaremos en la operación de eliminación.
 
 ### **¿Cómo se implementa un método de eliminación?**
 
@@ -737,7 +737,7 @@ Este método toma como parámetro el ID de la "pixa" y llama al `deleteById`, e
 
 ### **¿Cómo se crea un endpoint para eliminar una entrada?**
 
-En el controlador de la aplicación, debemos definir el endpoint que permita recibir peticiones de eliminación. Utilizaremos `DeleteMapping` para asociar el endpoint HTTP DELETE.}
+En el controlador de la aplicación, debemos definir el endpoint que permita recibir peticiones de eliminación. Utilizaremos `DeleteMapping` para asociar el endpoint HTTP DELETE.
 
 ```java
 @DeleteMapping("/{idPizza}")
@@ -838,7 +838,7 @@ Ejemplo de configuración:
 
 ### **¿Cómo optimizar la recuperación de relaciones?**
 
-De manera predeterminada, JPA y Hibernate gestionan las siguientes configuraciones por tipo de relación:
+De manera predeterminada, JPA e Hibernate gestionan las siguientes configuraciones por tipo de relación:
 
 - **OneToMany** y **ManyToMany**: Por defecto son Lazy.
 - **ManyToOne** y **OneToOne**: Por defecto son Eager.
@@ -850,6 +850,26 @@ Recomendaciones generales:
 - Si una relación es ampliamente usada, considerar marcarla como Eager.
 
 Con una comprensión clara sobre cómo y cuándo aplicar Lazy o Eager, así como gestionar adecuadamente las relaciones entre entidades, estarás equipado para optimizar el rendimiento y funcionamiento de tu aplicación. ¡Sigue aprendiendo y perfeccionando estos conceptos en tus proyectos!
+
+
+
+# 11-Query Methods en Spring para Consultas Personalizadas
+
+Creado: 9 de octubre de 2025 12:34
+ítem principal: 03-SPRING DATA REPOSITORIES (https://www.notion.so/03-SPRING-DATA-REPOSITORIES-281f5b42f770806c884ce10c3f0d7fd3?pvs=21)
+
+Consultas personalizadas con Query Methods:
+And, Or, True, IgnoreCase & OrderBy
+
+```java
+public interface PizzaRepository extends ListCrudRepository<PizzaEntity, Integer> {
+		// Consultar todas las pizzas disponibles ordenados por percio
+    List<PizzaEntity> findAllByAvailableTrueOrderByPrice();
+		// Consultar todas las pizzas disponibles y por nombre ignorando el case.
+    PizzaEntity findAllByAvailableTrueAndNameIgnoreCase(String name);
+}
+
+```
 
 
 
