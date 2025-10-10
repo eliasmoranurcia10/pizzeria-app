@@ -1395,5 +1395,87 @@ JPQL muestra su fortaleza en su facilidad de uso al trabajar con OOP y su simili
 
 
 
+# 18-Consultas SQL nativas y ordenación con Hibernate en Spring Data
+
+Creado: 10 de octubre de 2025 14:30
+ítem principal: 04-PERSONALIZACION DE QUERIES (https://www.notion.so/04-PERSONALIZACION-DE-QUERIES-281f5b42f77080119c8ee39f9d5d158d?pvs=21)
+
+## **¿Cuál es la utilidad de trabajar con queries nativos en Spring Data?**
+
+Trabajar con queries nativos en Spring Data nos proporciona una flexibilidad impresionante, ya que nos permite operar directamente con SQL y aprovechar todas las características que una base de datos particular soporta. A diferencia de los Query Methods o JPQL, que pueden tener limitaciones en algunos escenarios específicos, los queries nativos nos liberan de estas restricciones e incrementan nuestras opciones de implementación.
+
+### **¿Cómo se crea un método para consultas específicas en la base de datos?**
+
+Para ilustrar el uso de queries nativos, vamos a crear un método que permita consultar las órdenes de un cliente específico dentro del sistema de una pizzería. Este ejemplo te proporcionará una comprensión sólida sobre cómo organizar y ejecutar una consulta directa en SQL desde Spring Data.
+
+1. **Identificar el Repositorio**: Comienza creando el método en el repositorio que necesites, en este caso, el `OrderRepository`.
+2. **Definir el Método**: Crea un método que retorne una lista de órdenes, llamémosle `findCustomerOrders`.
+3. **Anotación @Query**: Usa la anotación `@Query` para definir el SQL nativo que se desea ejecutar. En este caso:
+
+    ```java
+    public interface OrderRepository extends ListCrudRepository<OrderEntity, Integer> {
+    
+        @Query(value = "SELECT * FROM pizza_order WHERE id_customer = :id", nativeQuery = true)
+        List<OrderEntity> findCustomerOrders(@Param("id") String idCustomer);
+    }
+    
+    ```
+
+4. **Marcado de Parámetros**: Con `@Param`, asocia parámetros que se recibirán en el método.
+
+### **¿Cómo integrar el método en el servicio adecuado?**
+
+Una vez definido el método en el repositorio, necesitas incorporarlo en el servicio donde se consumirá:
+
+1. **Implementar método en el Service**: Crea un método que devuelva una lista de órdenes, llamémosle `getCustomerOrders`, donde se recibirá el `idCustomer`.
+
+    ```java
+    public List<OrderEntity> getCustomerOrders(String idCustomer) {
+        return this.orderRepository.findCustomerOrders(idCustomer);
+    }
+    
+    ```
+
+
+### **¿Cómo especificar el método en un punto de acceso API?**
+
+Para exponer este método a través de una API, añade un endpoint GET en el controlador:
+
+1. **Definición en el controlador**: Emplea la anotación `@GetMapping` para definir el endpoint, asegurando que se recibe el `idCustomer` como variable de ruta.
+
+    ```java
+    @GetMapping("/customer/{id}")
+    public ResponseEntity<List<OrderEntity>> getCustomerOrders(@PathVariable String id) {
+        return ResponseEntity.ok(this.orderService.getCustomerOrders(id));
+    }
+    ```
+
+
+### **¿Cómo gestionar ordenación de elementos en las respuestas?**
+
+Es frecuente que quieras ordenar los resultados de tus consultas. Puedes utilizar la anotación `@OrderBy` para ordenar los elementos antes de devolverlos.
+
+1. **Implementación de @OrderBy**: Si deseas ordenar por precio, agrega la anotación en la entidad:
+
+    ```java
+    @OrderBy("price ASC")
+    private List<OrderItemEntity> orderItems;
+    
+    ```
+
+
+### **¿Cómo solucionar problemas y errores comunes?**
+
+Al ejecutar la aplicación, es posible que encuentres errores como el 500 debido a conflictos al llamar métodos. Asegúrate de:
+
+- No llamar de manera recursiva el mismo servicio.
+- Corregir cualquier referencia incorrecta a métodos, por ejemplo, usar `orderRepository.findCustomerOrders` en lugar de una llamada recursiva incorrecta.
+
+Este proceso de implementar queries nativos y refinar el rendimiento del sistema nos ofrece considerables beneficios. Recuerda que la precisión y el detalle en las configuraciones son clave para el éxito de las aplicaciones basadas en consultas SQL directas en Spring Data. ¡Sigue explorando y perfeccionando tus habilidades!
+
+
+
+
+
 
 
