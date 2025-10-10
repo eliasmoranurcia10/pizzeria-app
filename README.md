@@ -1316,6 +1316,83 @@ Integrar paginación y ordenamiento dinámico en tu aplicación mejora significa
 
 
 
+# 17-Consultas de Base de Datos con JPQL en Spring Boot
+
+Creado: 10 de octubre de 2025 12:39
+ítem principal: 03-SPRING DATA REPOSITORIES (https://www.notion.so/03-SPRING-DATA-REPOSITORIES-281f5b42f770806c884ce10c3f0d7fd3?pvs=21)
+
+## **¿Qué es JPQL y cómo utilizarlo?**
+
+JPQL, o Java Persistent Query Language, es un lenguaje que se utiliza para realizar consultas sobre una base de datos desde las Entities en vez de las tablas tradicionales. Esto permite trabajar de manera más intuitiva para los desarrolladores en Java, ya que se utilizan atributos de objetos en lugar de columnas y tablas.
+
+### **¿Cómo crear un `CustomerRepository`?**
+
+Para manejar la información de los clientes almacenada en la base de datos, primero necesitamos crear un repositorio. Vamos a seguir estos pasos:
+
+1. Crear un `CustomerRepository` que extiende de `ListCloudRepository`.
+2. Utilizar la `CustomerEntity` para definir el tipo de la clave primaria, que en este caso es un `String`.
+3. Implementar un método para realizar consultas usando JPQL.
+
+```java
+public interface CustomerRepository extends ListCrudRepository<CustomerEntity, String> {
+
+    @Query(value = "SELECT c FROM CustomerEntity c WHERE c.phoneNumber = :phone")
+    CustomerEntity findByPhone(@Param("phone") String phone);
+}
+```
+
+### **¿Cómo configurar el servicio de clientes?**
+
+Una vez definido el repository, es fundamental crear un servicio que lo integre y lo use para gestionar la lógica de negocio relacionada con la consulta de clientes:
+
+1. Inyectar `CustomerRepository` en `CustomerService`.
+2. Habilitar la inyección de dependencias con la anotación `@Service`.
+3. Implementar el método `findByPhone` que va a recibir un `teléfono` y utilizar el repository para la consulta.
+
+```java
+@Service
+@AllArgsConstructor
+public class CustomerService {
+
+    private final CustomerRepository customerRepository;
+
+    public CustomerEntity findByPhone(String phone) {
+        return this.customerRepository.findByPhone(phone);
+    }
+}
+
+```
+
+### **¿Cómo construir el controlador de clientes?**
+
+El siguiente paso es crear un controlador que exponga endpoints HTTP para manejar las solicitudes relativas a los clientes:
+
+1. Anotar el controlador con `@RestController` y `@RequestMapping("/api/customers")`.
+2. Inyectar el `CustomerService` en el controlador usando `@Autowired` (aunque no es obligatorio).
+3. Implementar el método `getByPhone` que atenderá las peticiones GET y devolverá la información de un cliente en base a su número de teléfono.
+
+```java
+@RestController
+@RequestMapping("/api/customers")
+@AllArgsConstructor
+public class CustomerController {
+    private final CustomerService customerService;
+
+    @GetMapping("/phone/{phone}")
+    public ResponseEntity<CustomerEntity> getByPhone(@PathVariable String phone) {
+        return ResponseEntity.ok(this.customerService.findByPhone(phone));
+    }
+}
+
+```
+
+### **Ejecución y verificación de la aplicación**
+
+Ya listo el controlador, es el momento de poner la aplicación en ejecución y probar el endpoint creado. Al realizar una solicitud GET a `/api/customers/fund/{phone}`, se espera recibir toda la información del cliente asociado al número de teléfono proporcionado. Si todo se ha hecho de manera correcta, la API responderá con estado 200 y los detalles del usuario.
+
+JPQL muestra su fortaleza en su facilidad de uso al trabajar con OOP y su similitud en sintaxis con SQL estándar. Sin embargo, es importante considerar que SQL nativo ofrece características avanzadas no disponibles en JPQL, lo que podría ser un aspecto a explorar en clases futuras para ampliar nuestras habilidades de consulta. ¡Sigue explorando y potenciando tus habilidades en desarrollo con Java y consulta de bases de datos!
+
+
 
 
 
