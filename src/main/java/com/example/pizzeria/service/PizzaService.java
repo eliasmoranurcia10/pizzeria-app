@@ -1,12 +1,13 @@
 package com.example.pizzeria.service;
 
 import com.example.pizzeria.persistence.entity.PizzaEntity;
+import com.example.pizzeria.persistence.repository.PizzaPagSortRepository;
 import com.example.pizzeria.persistence.repository.PizzaRepository;
 import lombok.AllArgsConstructor;
 import org.apache.coyote.BadRequestException;
-import org.springframework.data.crossstore.ChangeSetPersister;
-import org.springframework.jdbc.core.BeanPropertyRowMapper;
-import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -15,9 +16,11 @@ import java.util.List;
 @AllArgsConstructor
 public class PizzaService {
     private final PizzaRepository pizzaRepository;
+    private final PizzaPagSortRepository pizzaPagSortRepository;
 
-    public List<PizzaEntity> getAll(){
-        return this.pizzaRepository.findAll();
+    public Page<PizzaEntity> getAll(int page, int elements){
+        Pageable pageRequest = PageRequest.of(page, elements);
+        return this.pizzaPagSortRepository.findAll(pageRequest);
     }
 
     public List<PizzaEntity> getAvailable() {

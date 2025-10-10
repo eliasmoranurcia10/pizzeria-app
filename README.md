@@ -1158,5 +1158,81 @@ Estos son algunos ejemplos de cómo se pueden utilizar los Query Methods para lo
 
 
 
+# 15-Paginación y Ordenación con Spring Data Repositories
+
+Creado: 10 de octubre de 2025 1:54
+ítem principal: 03-SPRING DATA REPOSITORIES (https://www.notion.so/03-SPRING-DATA-REPOSITORIES-281f5b42f770806c884ce10c3f0d7fd3?pvs=21)
+
+## **¿Qué es el Paging and Sorting Repository en Spring Data?**
+
+El Paging and Sorting Repository es una herramienta poderosa dentro de Spring Data que permite gestionar y estructurar grandes volúmenes de datos, haciendo posible paginar y organizar consultas de manera eficiente. Es especialmente útil cuando se trabaja con grandes cantidades de información o simplemente cuando se quiere presentar datos de forma más manejable y accesible.
+
+### **¿Cómo crear un repositorio de Paging and Sorting?**
+
+Para crear un repositorio de Paging and Sorting en un proyecto de Spring, es necesario extender directamente de `PagingAndSortingRepository`. Aquí te muestro un ejemplo:
+
+```java
+public interface PizzaPagSortRepository extends ListPagingAndSortingRepository<PizzaEntity, Integer> {
+}
+```
+
+- `PizzaEntity` es la clase que representa la entidad o modelo que estamos gestionando.
+- `Integer` es el tipo de dato para la clave primaria.
+
+### **¿Cómo implementar el repositorio en un servicio?**
+
+El siguiente paso es inyectar este repositorio en el servicio para poder llevar a cabo las operaciones deseadas. A continuación te muestro cómo hacerlo:
+
+1. Inyecta el repositorio usando la anotación `@Autowired`.
+
+```java
+@Autowired
+private final PizzaPagSortRepository pizzaPagSortRepository;
+
+```
+
+1. Modifica el método `GetAll` para hacerlo paginado:
+
+```java
+public Page<PizzaEntity> getAll(int page, int elements){
+    Pageable pageRequest = PageRequest.of(page, elements);
+    return this.pizzaPagSortRepository.findAll(pageRequest);
+}
+
+```
+
+- Aquí `PageRequest.of(int page, int elements)` crea un objeto `Pageable` que define el número de la página y el tamaño de la página, es decir, cuántos elementos tendrá cada una.
+
+### **¿Cómo gestionar la paginación en el controlador?**
+
+Dentro del controlador, es fundamental recibir los parámetros que indican el número de página y el tamaño de los elementos por página. Estos se manejan como parámetros de petición:
+
+```java
+@GetMapping
+public ResponseEntity<Page<PizzaEntity>> getAll(
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "8") int elements
+) {
+    return ResponseEntity.ok(this.pizzaService.getAll(page, elements));
+}
+
+```
+
+- `@RequestParam` se utiliza para capturar los parámetros de la URL de manera sencilla. También se pueden definir valores por defecto, como `0` para page y `8` para elements.
+
+### **¿Qué ventajas ofrece el Paging and Sorting Repository?**
+
+El uso del Paging and Sorting Repository trae consigo varias ventajas significativas:
+
+- **Eficiencia**: Permite manejar y consultar grandes cantidades de datos de manera efectiva, evitando sobrecargar el sistema.
+- **Flexibilidad**: Comodidad de configurar el tamaño de página y el número de página según las necesidades del usuario.
+- **Simplicidad**: Es fácil de implementar y no requiere código complejo, lo que facilita su integración en aplicaciones existentes.
+
+La implementación de un Paging and Sorting Repository optimiza la forma en que presentamos y manejamos la información, garantizando que se pueda acceder a los datos de manera rápida y efectiva. ¡Sigue explorando sus capacidades y verás cómo facilita tu gestión de datos en aplicaciones Spring!
+
+
+
+
+
 
 

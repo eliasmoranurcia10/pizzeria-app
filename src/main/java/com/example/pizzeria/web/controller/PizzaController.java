@@ -4,7 +4,7 @@ import com.example.pizzeria.persistence.entity.PizzaEntity;
 import com.example.pizzeria.service.PizzaService;
 import lombok.AllArgsConstructor;
 import org.apache.coyote.BadRequestException;
-import org.springframework.data.crossstore.ChangeSetPersister;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,8 +17,11 @@ public class PizzaController {
     private final PizzaService pizzaService;
 
     @GetMapping
-    public ResponseEntity<List<PizzaEntity>> getAll() {
-        return ResponseEntity.ok(this.pizzaService.getAll());
+    public ResponseEntity<Page<PizzaEntity>> getAll(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "8") int elements
+    ) {
+        return ResponseEntity.ok(this.pizzaService.getAll(page, elements));
     }
 
     @GetMapping("/{idPizza}")
