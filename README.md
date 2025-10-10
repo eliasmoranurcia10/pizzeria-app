@@ -1232,6 +1232,90 @@ La implementación de un Paging and Sorting Repository optimiza la forma en que 
 
 
 
+# 16-Ordenamiento Dinámico con Paging and Sorting Repository
+
+Creado: 10 de octubre de 2025 2:52
+ítem principal: 03-SPRING DATA REPOSITORIES (https://www.notion.so/03-SPRING-DATA-REPOSITORIES-281f5b42f770806c884ce10c3f0d7fd3?pvs=21)
+
+## **¿Cómo implementar un ordenamiento dinámico en un repositorio en Spring?**
+
+Imagina que puedes controlar la manera en que los datos se presentan, no solo la cantidad de información como con la paginación, sino también el orden en que estos aparecen. Eso es precisamente lo que lograremos con el Paging and Sorting Repository en Spring. Este tutorial te guiará en la implementación de un sistema que facilita tanto la paginación como el ordenamiento dinámico de datos en tus aplicaciones.
+
+### **¿Cómo crear un nuevo método de consulta con paginación y ordenamiento?**
+
+Para comenzar, es crucial entender que nuestro nuevo método de consulta no retornará una lista, sino que regresará una página de nuestra entidad. En este ejemplo, la entidad se llama `PizzaEntity`. Crearemos un método llamado `FindByAvailableTrue` que, usando el Paging and Sorting Repository, nos permitirá consultar todas las entidades disponibles.
+
+```java
+public interface PizzaPagSortRepository extends ListPagingAndSortingRepository<PizzaEntity, Integer> {
+    Page<PizzaEntity> findByAvailableTrue(Pageable pageable);
+}
+
+```
+
+Este método recibe un objeto `Pageable`, el cual es esencial para gestionar tanto la paginación como el ordenamiento de manera efectiva.
+
+### **¿Cómo manejar los parámetros de paginación y ordenamiento?**
+
+Para realizar consultas paginadas y ordenadas, debemos considerar ciertos parámetros: la página que queremos consultar, cuántos elementos incluir en cada página, y la columna por la cual deseamos ordenar los resultados. Esto lo controlamos a través de un `PageRequest`, que envía un tercer elemento, el `Sort`, junto con el string `sortBy`.
+
+Modificaré el servicio para ajustar el tipo de retorno y enviar los parámetros necesarios al repositorio:
+
+```java
+public Page<PizzaEntity> getAvailable(int page, int elements, String sortBy, String sortDirection) {
+    Sort sort = Sort.by(Sort.Direction.fromString(sortDirection), sortBy);
+    Pageable pageRequest = PageRequest.of(page, elements, sort);
+    return this.pizzaPagSortRepository.findByAvailableTrue(pageRequest);
+}
+
+```
+
+En este caso, el resultado será una página que podemos pasar posteriormente al controlador.
+
+### **¿Cómo se actualiza el controlador para recibir parámetros?**
+
+El siguiente paso es actualizar el controlador de nuestra aplicación para que pueda manejar nuevos parámetros de entrada. Utilizaremos `RequestParam` para recibir el `sortBy` y asignar un valor por defecto como "price":
+
+```java
+@GetMapping("/available")
+public ResponseEntity<Page<PizzaEntity>> getAvailable(
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "8") int elements,
+        @RequestParam(defaultValue = "price") String sortBy,
+        @RequestParam(defaultValue = "ASC") String sortDirection
+) {
+    return ResponseEntity.ok(this.pizzaService.getAvailable(page, elements, sortBy, sortDirection));
+}
+```
+
+Esto nos permitirá, por defecto, ordenar los resultados por el precio de las pizzas.
+
+### **¿Cómo configurar el ordenamiento ascendente o descendente?**
+
+Agregar la capacidad de ordenar ascendentemente o descendentemente brinda flexibilidad adicional a nuestros métodos de consulta. Para ello, introducimos un nuevo parámetro llamado `sortDirection`, el cual predeterminamos como ascendente:
+
+```java
+@RequestParam(defaultValue = "ASC") String sortDirection
+
+```
+
+Con este cambio, podemos construir un objeto `Sort` que reaccione a este parámetro:
+
+```java
+Sort sort = Sort.by(Sort.Direction.fromString(sortDirection), sortBy);
+PageRequest pageRequest = PageRequest.of(page, size, sort);
+
+```
+
+Implementar este ajuste en el controlador nos da la opción de manejar consultas que ordenen datos en ambas direcciones sin esfuerzo adicional.
+
+### **¿Qué beneficios proporciona el uso de Page Unsorting Repository?**
+
+Integrar paginación y ordenamiento dinámico en tu aplicación mejora significativamente la experiencia del usuario final. No solo le permite acceder a grandes volúmenes de datos de manera más efectiva, sino que también le da control sobre la manera en que se presenta la información. Esto es un gran paso hacia el desarrollo de aplicaciones web potentes y adaptables. ¡Utiliza estas técnicas en tus proyectos y observa la diferencia!
+
+
+
+
+
 
 
 

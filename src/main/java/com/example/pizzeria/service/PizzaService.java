@@ -8,6 +8,7 @@ import org.apache.coyote.BadRequestException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -23,9 +24,11 @@ public class PizzaService {
         return this.pizzaPagSortRepository.findAll(pageRequest);
     }
 
-    public List<PizzaEntity> getAvailable() {
+    public Page<PizzaEntity> getAvailable(int page, int elements, String sortBy, String sortDirection) {
         System.out.println(this.pizzaRepository.countByVeganTrue());
-        return this.pizzaRepository.findAllByAvailableTrueOrderByPrice();
+        Sort sort = Sort.by(Sort.Direction.fromString(sortDirection), sortBy);
+        Pageable pageRequest = PageRequest.of(page, elements, sort);
+        return this.pizzaPagSortRepository.findByAvailableTrue(pageRequest);
     }
 
     public PizzaEntity getByName(String name) {
