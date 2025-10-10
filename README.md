@@ -943,4 +943,128 @@ Con estas prácticas y ejemplos podrás manipular y consultar datos de manera m�
 
 
 
+# 13-Consultas Avanzadas con Query Methods en Java Spring
+
+Creado: 9 de octubre de 2025 20:45
+ítem principal: 03-SPRING DATA REPOSITORIES (https://www.notion.so/03-SPRING-DATA-REPOSITORIES-281f5b42f770806c884ce10c3f0d7fd3?pvs=21)
+
+## **¿Qué son y cómo utilizar los Query Methods para listas y fechas?**
+
+Los Query Methods son una herramienta poderosa que nos facilitan la recuperación de información de una base de datos mediante el uso de convenciones de nomenclatura específica. A través de ellos, podemos realizar consultas basadas en condiciones como listas o fechas. En este artículo, exploraremos cómo crear un método de consulta que permita recuperar órdenes de una pizzería según una fecha específica.
+
+### **¿Cómo se crean consultas basadas en fechas?**
+
+Para recuperar las órdenes que nuestra pizzería ha tenido hoy, inicialmente, es esencial crear un método en nuestro `OrderRepository`. Este método utilizará la convención `findAllByDateAfter` para obtener órdenes con fecha posterior a una específica:
+
+```java
+public interface OrderRepository extends ListCrudRepository<OrderEntity, Integer> {
+    List<OrderEntity> findAllByDateAfter(LocalDateTime date);
+}
+
+```
+
+Luego, se desarrollará un servicio que utiliza este método para devolver las órdenes del día. Se crea un objeto `LocalDateTime` para obtener la fecha actual:
+
+```java
+@Service
+public class OrderService {
+    public List<OrderEntity> getTodayOrders() {
+        LocalDateTime today = LocalDate.now().atStartOfDay();
+        return orderRepository.findAllByDateAfter(today);
+    }
+}
+
+```
+
+Posteriormente, se crea un `endpoint` en el controlador que utiliza este nuevo servicio para responder a las peticiones:
+
+```java
+@RestController
+@RequestMapping("/orders")
+public class OrderController {
+    @GetMapping("/today")
+    public ResponseEntity<List<OrderEntity>> getTodayOrders() {
+        return ResponseEntity.ok(orderService.getTodayOrders());
+    }
+}
+
+```
+
+### **¿Cómo se gestionan las consultas en listas?**
+
+Además de fechas, los Query Methods también permiten gestionar listas. Supongamos que queremos listar todas las órdenes externas (domicilio o para llevar). Para esto, creamos un `QueryMethod` que use el keyword `IN`.
+
+En el `OrderRepository`, usamos el método `findAllByMethodIn`, recibiendo una lista de métodos de entrega:
+
+```java
+public interface OrderRepository extends ListCrudRepository<OrderEntity, Integer> {
+    List<OrderEntity> findAllByMethodIn(List<String> methods);
+}
+
+```
+
+En esta consulta, se trabaja con una lista de strings que representan los métodos de entrega deseados:
+
+```java
+@Service
+public class OrderService {
+    public List<OrderEntity> getOutsideOrders() {
+        List<String> methods = Arrays.asList("D", "C");
+        return orderRepository.findAllByMethodIn(methods);
+    }
+}
+
+```
+
+Y finalmente, se implementa un `endpoint` para procesar estas consultas:
+
+```java
+@RestController
+@RequestMapping("/orders")
+public class OrderController {
+    @GetMapping("/outside")
+    public ResponseEntity<List<OrderEntity>> getOutsideOrders() {
+        return ResponseEntity.ok(orderService.getOutsideOrders());
+    }
+}
+
+```
+
+### **¿Cómo contar elementos con Query Methods?**
+
+Además de obtener datos específicos, los Query Methods permiten realizar operaciones como contar elementos. Aquí se muestra un ejemplo de cómo contar cuántas pizzas veganas ofrece una pizzería.
+
+En el `PizzaRepository`, se puede usar el método `countBy` para determinar cuántas pizzas tienen una propiedad específica, en este caso, si son veganas:
+
+```java
+public interface PizzaRepository extends ListCrudRepository<PizzaEntity, Integer> {
+    int countByVeganTrue();
+}
+
+```
+
+Podemos aplicar esta lógica en un servicio para imprimir el resultado en la consola:
+
+```java
+@Service
+public class PizzaService {
+    public void countVeganPizzas() {
+        int veganPizzas = pizzaRepository.countByVeganTrue();
+        System.out.println("Número de pizzas veganas: " + veganPizzas);
+    }
+}
+
+```
+
+Al ejecutar esta funcionalidad, el sistema consulta cuántas entradas en la tabla cumplen la condición indicada y nos devuelve el total.
+
+### **¿Qué consideraciones adicionales hay en el uso de query methods?**
+
+- **Facilidad de lectura:** Los Query Methods son intuitivos y permiten entender la lógica de la consulta directamente desde su nombre.
+- **Evitar consultas complejas:** Aunque son poderosos, se recomienda no abusar de su uso para consultas extremadamente complejas, ya que podrían afectar el rendimiento.
+- **Gestión de métodos IN:** Para consultas con el keyword IN, asegúrate de manejar listas de manera adecuada, evitando duplicados y verificando los valores disponibles en la base de datos.
+
+¡Con estos ejemplos de uso de Query Methods para manejar fechas, listas y contar elementos, estarás equipado con las habilidades necesarias para manejar diferentes escenarios en tus aplicaciones! Continúa explorando y aplicando estas técnicas para convertirte en un experto en manejo de bases de datos.
+
+
 
