@@ -46,6 +46,11 @@ public class PizzaController {
         return ResponseEntity.ok(this.pizzaService.getWithOut(ingredient));
     }
 
+    @GetMapping("/cheapest/{price}")
+    public ResponseEntity<List<PizzaEntity>> getCheapestPizzas(@PathVariable double price) {
+        return ResponseEntity.ok(this.pizzaService.getCheapest(price));
+    }
+
     @PostMapping
     public ResponseEntity<PizzaEntity> add(@RequestBody PizzaEntity pizza) throws BadRequestException {
         return ResponseEntity.ok(this.pizzaService.save(pizza));

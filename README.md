@@ -1068,3 +1068,95 @@ Al ejecutar esta funcionalidad, el sistema consulta cuántas entradas en la tabl
 
 
 
+# 14-Uso de Query Methods para Filtrar y Ordenar Datos en Spring
+
+Creado: 10 de octubre de 2025 0:06
+ítem principal: 03-SPRING DATA REPOSITORIES (https://www.notion.so/03-SPRING-DATA-REPOSITORIES-281f5b42f770806c884ce10c3f0d7fd3?pvs=21)
+
+## **¿Cómo limitar registros con Query Methods en Spring?**
+
+Limitar registros al consultar bases de datos es una tarea fundamental para optimizar la performance de nuestras aplicaciones. En Spring, podemos lograrlo a través de los Query Methods. Estos métodos no solo nos permiten recuperar una cantidad específica de registros, sino también usar elementos de programación funcional como `Optional` para manejar respuestas.
+
+Veamos cómo podemos implementar estas funcionalidades en un ejemplo práctico usando un proyecto de pizzería.
+
+### **¿Cómo asegurarse de que solo un registro se recupere con Query Methods?**
+
+Para limitar la recuperación a un solo registro, no usaremos `findAll`, sino `findFirst`. Este método devuelve el primer registro que coincide con las condiciones definidas. En caso de necesitar más de un registro, `findTop` es la alternativa. Ambos métodos sirven para garantizar el manejo preciso de los datos.
+
+Ejemplo de implementación:
+
+```java
+public interface PizzaRepository extends JpaRepository<PizzaEntity, Long> {
+    Optional<PizzaEntity> findFirstByAvailableTrue();
+}
+
+```
+
+Esto permite obtener la primera pizza disponible. Recuerda ajustar la lógica en el servicio que llame a este método modificado.
+
+### **¿Cómo integrar `Optional` en las consultas?**
+
+`Optional` es un potente aliado para manejar respuestas nulas o excepcionales en Java. Puede emplearse cuando llamamos a un Query Method que podría retornar un valor nulo. Si no se encuentra ningún resultado, podemos lanzar una excepción o devolver un valor por defecto.
+
+Ejemplo de manejo de `Optional`:
+
+```java
+Optional<PizzaEntity> optionalPizza = pizzaRepository.findFirstByAvailableTrue();
+PizzaEntity pizza = optionalPizza.orElseThrow(() -> new RuntimeException("La pizza no existe"));
+
+```
+
+O, alternativamente:
+
+```java
+PizzaEntity pizza = optionalPizza.orElseGet(() -> {
+    // Lógica alternativa si la pizza no existe
+    return new DefaultPizza();
+});
+
+```
+
+### **¿Cómo encontrar las pizzas más baratas?**
+
+Podemos crear métodos para encontrar, por ejemplo, las tres pizzas más baratas. Utilizamos `findTop3By` para restringir la cantidad de registros. Asimismo, `OrderBy` permite ordenar estos registros según una propiedad, como el precio.
+
+Ejemplo de búsqueda de pizzas económicas:
+
+```java
+List<PizzaEntity> findTop3ByAvailableTrueAndPriceLessThanEqualOrderByPriceAsc(Double price);
+
+```
+
+Este método recupera las tres pizzas más baratas disponibles que cuestan menos de un valor dado, ordenándolas de manera ascendente.
+
+### **¿Cómo invocar estos métodos desde el servicio?**
+
+Una vez definidos en el repositorio, invocamos estos métodos desde un servicio. Creamos un método que pase el precio como parámetro a nuestro Query Method.
+
+```java
+public List<PizzaEntity> getCheapestPizzas(Double price) {
+    return pizzaRepository.findTop3ByAvailableTrueAndPriceLessThanEqualOrderByPriceAsc(price);
+}
+
+```
+
+### **¿Cómo verificar consultas en el controlador?**
+
+Finalmente, modificamos el controlador para permitir que los clientes consulten las pizzas más baratas al proporcionar un cierto precio:
+
+```java
+@GetMapping("/pizzas/cheapest/{price}")
+public List<PizzaEntity> getCheapestPizzas(@PathVariable Double price) {
+    return pizzaService.getCheapestPizzas(price);
+}
+
+```
+
+Esta consulta se ejecuta y devuelve las tres pizzas más económicas cumpliendo las condiciones mencionadas. Además, es importante revisar la consulta SQL que se genera y asegurarse de que los resultados se limiten adecuadamente.
+
+Estos son algunos ejemplos de cómo se pueden utilizar los Query Methods para lograr búsquedas eficientes y personalizadas. Estimula explorar más sobre esta funcionalidad. Para profundizar, consulta los recursos adicionales que ofrecen documentación detallada. Continuar aprendiendo y explorando te permitirá sacar el máximo provecho de las poderosas herramientas de Spring.
+
+
+
+
+
