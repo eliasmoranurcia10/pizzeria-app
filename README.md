@@ -101,7 +101,7 @@ Esta estructura te permitirá organizar tu código de forma clara y eficiente, e
 
 - Al trabajar con **Lombok**, asegúrate de tener el plugin relevante instalado en IntelliJ para aprovechar al máximo sus características.
 - Siempre verifica que tu entorno de desarrollo esté correctamente configurado para evitar errores de compilación relacionados con la versión de Java.
-- Aunque estos pasos se centran en un entorno de desarrollo específico, los principios son aplicables a otras IDEs populares.
+- Aunque estos pasos se centran en un entorno de desarrollo específico, los principios son aplicables a otras Ides populares.
 
 Con esta guía, estás listo para comenzar a desarrollar tu aplicación Spring de manera eficiente. Mantente atento en las próximas secciones para aprender cómo conectar tu aplicación y darle vida a tus servicios web.
 
@@ -120,16 +120,16 @@ Nuestro modelo de entidad-relación para la base de datos del proyecto de pizzer
     - **ID de pizza:** Identificador único de cada pizza.
     - **Nombre y descripción:** Información detallada de la pizza.
     - **Precio:** Tipo decimal 5,2 (cinco dígitos en total, dos después del punto).
-    - **Atributos booleanos:** Identificación de si la pizza es vegetariana, vegana o está disponible mediante el uso de columnas `tinyint`.
+    - **Atributos booleanos:** Identificación de la pizza es vegetariana, vegana o está disponible mediante el uso de columnas `tinyint`.
 - **Tabla `pizza_order`:**
-    - **ID de orden:** Identificador único de cada orden.
+    - **Id de orden:** Identificador único de cada orden.
     - **Relación con `customer`:** Usando `ID customer` como clave foránea.
     - **Fecha de la orden:** Registro temporal de la creación de la orden.
     - **Valor total:** Suma del costo de todas las pizzas en la orden.
     - **Método de entrega:** Almacena en un carácter si la orden es para llevar, recoger o para comer en el lugar.
     - **Notas adicionales:** Registro para observaciones específicas del cliente sobre la orden.
 - **Tabla `customer`:**
-    - **ID de cliente:** Identificación única de cada cliente.
+    - **Id de cliente:** Identificación única de cada cliente.
     - **Datos del cliente:** Incluye nombre, dirección, email y número de teléfono.
 - **Tabla `order_item`:**
     - **Relación uno a uno con `pizza`:** Cada ítem de la orden tiene un enlace a una pizza específica.
@@ -179,7 +179,7 @@ Estas configuraciones permiten que la estructura de las bases de datos se actual
 
 ## **¿Cómo adaptar la nueva interfaz de `IntelliJ IDEA`?**
 
-Finalmente, para aprovechar las actualizaciones de `IntelliJ IDEA` en su interfaz, podemos activar la "New UI" en `Appearance & Behavior`. Esto nos permitirá familiarizarnos con una interfaz más moderna y eficiente. Simplemente habilita la interfaz, aplica los cambios y reinicia `IntelliJ IDEA`.
+Finalmente, para aprovechar las actualizaciones de `IntelliJ IDEA` en su interfaz, podemos activar la "New UI" en `Appearance & Behavior`. Esto nos permitirá familiarizarnos con una interfaz más moderna y eficiente. Simplemente, habilita la interfaz, aplica los cambios y reinicia `IntelliJ IDEA`.
 
 Utilizar estas opciones no solo mejora la experiencia de desarrollo, sino que también optimiza la gestión del proyecto en entorno de bases de datos. Al seguir aprendiendo y explorando nuevas herramientas y configuraciones, potencias tu capacidad para crear aplicaciones robustas y eficientes. ¡Sigue adelante y explora más en este emocionante viaje de aprendizaje!
 
@@ -230,7 +230,7 @@ public class PizzaEntity {
 
 ```
 
-- **Paso clave**: Usar la anotación `@Id` junto con `@GeneratedValue` especifica que este campo es la clave primaria y se autoincrementará.
+- **Paso clave**: Usar la anotación `@Id` junto con `@GeneratedValue`  específica que este campo es la clave primaria y se autoincrementará.
 - **Detalles adicionales**: `@Column` permite definir características adicionales de las columnas, como `unique`, `nullable`, `length` y `columnDefinition`.
 
 ### **¿Cómo se crea la entidad OrderEntity?**
@@ -367,7 +367,7 @@ private List<OrderItemEntity> items;
 
 ```
 
-Aquí, `mappedBy` se utiliza para definir la relación en el lado no propietario. En nuestra aplicación, el `OrderEntity` es el lado no propietario, y `OrderItemEntity` la tabla hija donde se originan muchas instancias desde una sola orden.
+Aquí, `mappedBy` se utiliza para definir la relación en el lado no propietario. En nuestra aplicación,  `OrderEntity` es el lado no propietario, y `OrderItemEntity` la tabla hija donde se originan muchas instancias desde una sola orden.
 
 ### **¿Cuáles son las recomendaciones para el uso de estas relaciones?**
 
@@ -462,7 +462,7 @@ Para comenzar a gestionar la información almacenada en una base de datos, es fu
 
 ### **¿Cómo realizar consultas con JDBC Template?**
 
-El `JDBC Template` es una poderosa herramienta que permite realizar consultas SQL y mapear los resultados a clases Java. Este enfoque nos brinda flexibilidad y control sobre las interacciones con la base de datos. A continuación, mostramos cómo crear un método para consultar todas las pizzas en nuestra pizzería.
+Él  `JDBC Template` es una poderosa herramienta que permite realizar consultas SQL y mapear los resultados a clases Java. Este enfoque nos brinda flexibilidad y control sobre las interacciones con la base de datos. A continuación, mostramos cómo crear un método para consultar todas las pizzas en nuestra pizzería.
 
 ```java
 @Service
@@ -491,7 +491,7 @@ public class PizzaService {
 
 ### **¿Cómo exponer consultas a través de un controlador REST?**
 
-Para hacer las consultas accesibles a través de un API RESTful, necesitamos un controlador que gestione las solicitudes HTTP. Aquí explicamos cómo exponer las pizzas a través de un endpoint REST.
+Para hacer las consultas accesibles a través del API RESTful, necesitamos un controlador que gestione las solicitudes HTTP. Aquí explicamos cómo exponer las pizzas a través de un endpoint REST.
 
 ```java
 @RestController
@@ -514,7 +514,7 @@ public class PizzaController {
 ```
 
 1. **Definición del Controlador**: Utilizamos `@RestController` para definir un controlador REST que maneja solicitudes HTTP.
-2. **Configuración del Ruteo**: Con `@RequestMapping` establecemos `/api/pizzas` como el path para el API.
+2. **Configuración del Ruteo**: Con `@RequestMapping` establecemos `/api/pizzas` como el path para API.
 3. **Método Get**: Usamos `@GetMapping` para especificar que este método responderá a solicitudes GET, devolviendo una lista de pizzas.
 
 Ahora, al enviar una petición GET a `http://localhost:8080/api/pizzas`, podremos obtener un listado de todas las pizzas disponibles en la base de datos.
@@ -538,11 +538,783 @@ public List<PizzaEntity> getUnavailablePizzas() {
 
 ### **Pruebas con herramientas como Postman**
 
-Una vez configurado el servicio y el controlador, es esencial probar nuestras consultas y el API RESTful. Utilizamos herramientas como Postman para enviar solicitudes y verificar respuestas. También se pueden realizar cambios dinámicos en las consultas y probar los resultados inmediatamente después.
+Una vez configurado el servicio y el controlador, es esencial probar nuestras consultas y API RESTful. Utilizamos herramientas como Postman para enviar solicitudes y verificar respuestas. También se pueden realizar cambios dinámicos en las consultas y probar los resultados inmediatamente después.
 
 Este enfoque nos permite mantener un flujo efectivo de desarrollo y pruebas, asegurando que las consultas funcionen según lo esperado en un entorno real.
 
 Con estas técnicas y herramientas, ahora estás listo para realizar consultas básicas y avanzadas a tu base de datos usando Java y Spring. Continúa explorando y experimentando con consultas para mejorar tu conocimiento y habilidades en el desarrollo de aplicaciones.
+
+
+
+# 07-Uso de Spring Data Repositories para Gestión de Datos
+
+Creado: 7 de octubre de 2025 20:15
+ítem principal: 03-SPRING DATA REPOSITORIES (https://www.notion.so/03-SPRING-DATA-REPOSITORIES-281f5b42f770806c884ce10c3f0d7fd3?pvs=21)
+
+## **¿Cómo facilitan los Spring Data Repositories la interacción con bases de datos?**
+
+Los Spring Data Repositories son elementos fundamentales para desarrollar aplicaciones en Spring, pues simplifican notablemente el manejo de bases de datos al proporcionar operaciones comunes necesarias. Esta eficiencia se logra a través de tres tipos principales de repositorios: CRUD Repository, Paging and Sorting Repository y JPA Repository. Estos repositorios no solo reducen la escritura de código repetitivo, sino que también optimizan tiempos de desarrollo y depuración.
+
+### **¿Cuáles son los tipos de Spring Repositories y sus funciones?**
+
+1. **CRUD Repository**: Este es el repositorio más utilizado por su capacidad para realizar operaciones de creación, lectura, actualización y eliminación (CRUD) sobre cualquier entidad.
+2. **Paging and Sorting Repository**: Tal como su nombre lo indica, este repositorio permite la paginación y la ordenación de resultados al interactuar con una entidad.
+3. **JPA Repository**: Extiende los dos repositorios anteriores, incluyendo además operaciones específicas de JPA (Java Persistence API) como `flush`, lo que facilita tareas más complejas en la base de datos.
+
+### **¿Cómo iniciar con los Spring Repositories?**
+
+Para comenzar a usar los Spring Repositories, es necesario seguir unos pasos clave:
+
+- Anotar la clase principal, o aquella que tenga la anotación `Spring Boot Application`, con `@EnableJpaRepositories`. Esto indica que se utilizarán repositorios de Spring en la aplicación.
+- Crear una nueva interfaz de repositorio que extienda uno de los repositorios de Spring mencionados. En este caso particular, se utiliza `ListCrudRepository` para que los métodos de obtención de datos devuelvan listas en lugar de iterables, lo que resulta más intuitivo al trabajar con colecciones de datos.
+
+```java
+public interface PizzaRepository extends ListCrudRepository<PizzaEntity, Integer> {
+    // Métodos específicos adicionales pueden ser añadidos aquí
+}
+
+```
+
+### **¿Cómo realizar consultas con Spring Repositories?**
+
+1. **Consultar todos los elementos**:
+    - Usar el método `findAll()` permite obtener todos los registros de una entidad sin necesidad de escribir sentencias SQL manualmente.
+
+```java
+public List<PizzaEntity> getAll(){
+    return this.pizzaRepository.findAll();
+}
+
+```
+
+1. **Consultar por ID**:
+    - Utilizar el método `findById()` permite recuperar un solo registro dado su clave primaria, devolviendo un `Optional` que puede manejarse para verificar la existencia del registro.
+
+```java
+public PizzaEntity get(Integer idPizza) {
+    return this.pizzaRepository.findById(idPizza).orElse(null);
+}
+
+```
+
+### **¿Cómo configurar controladores para manejar solicitudes?**
+
+Para exponer estas funcionalidades a través de una API REST, podemos configurar controladores que gestionen las peticiones HTTP y proporcionen los datos adecuados desde la base de datos.
+
+- Definir rutas que respondan a métodos HTTP como GET para obtener listas o elementos individuales según un `ID`.
+
+```java
+@RestController
+@RequestMapping("/api/pizzas")
+@AllArgsConstructor
+public class PizzaController {
+    private final PizzaService pizzaService;
+
+    @GetMapping
+    public ResponseEntity<List<PizzaEntity>> getAll() {
+        return ResponseEntity.ok(this.pizzaService.getAll());
+    }
+
+    @GetMapping("/{idPizza}")
+    public ResponseEntity<PizzaEntity> get(@PathVariable Integer idPizza) {
+        return ResponseEntity.ok(this.pizzaService.get(idPizza));
+    }
+}
+
+```
+
+### **¿Cuáles son las ventajas de usar Spring Repositories?**
+
+- **Reducción de Código**: Elimina la necesidad de escribir la lógica detallada del acceso a datos, permitiendo centrarse en la lógica de negocios.
+- **Consistencia y Simplicidad**: Provee una interfaz común y métodos estándar para todas las operaciones básicas sobre los datos.
+- **Escalabilidad y Flexibilidad**: Facilitan el manejo y la ampliación de la funcionalidad para incluir paginación, ordenación y más, ajustándose a las necesidades del proyecto.
+
+El enfoque robusto y flexible de los Spring Data Repositories tiene un impacto significativo en la eficiencia y eficacia del desarrollo de aplicaciones con bases de datos, motivándote a seguir explorando y aplicando estas herramientas en tus proyectos futuros.
+
+
+
+# 08-Guardar y Actualizar Registros con Spring Data Repositories
+
+Creado: 8 de octubre de 2025 0:50
+ítem principal: 03-SPRING DATA REPOSITORIES (https://www.notion.so/03-SPRING-DATA-REPOSITORIES-281f5b42f770806c884ce10c3f0d7fd3?pvs=21)
+
+## **¿Cómo guardar una nueva pizza en la base de datos?**
+
+El mundo del desarrollo de software con Spring Data Repositories tiene un objetivo claro: simplificar los procesos. Imagina lo fácil que es ahora trabajar con bases de datos gracias a las funcionalidades CRUD que estas herramientas nos ofrecen. En esta ocasión, te guiaré en cómo crear un nuevo registro de pizza en la base de datos usando Spring Repositories. Vamos al grano con ejemplos prácticos.
+
+Para comenzar, necesitamos crear un método en `PizzaService`. Este método será público, retornará un objeto de tipo `PizzaEntity` y lo llamaremos `save`. Aquí está el fragmento de código para hacer esto:
+
+```java
+public PizzaEntity save(PizzaEntity pizza) {
+    return this.pizzaRepository.save(pizza);
+}
+
+```
+
+Con una simple línea, logramos insertar un elemento en la base de datos. ¿No es increíble?
+
+## **¿Cómo gestionar peticiones POST en el controlador?**
+
+Ahora, en  `PizzaController`, necesitamos un método similar al anterior pero enfocado en manejar las peticiones POST. Aquí es donde el concepto de manejo de solicitudes HTTP cobra vida. Renombraremos este método a `add` y lo anotaremos con `@PostMapping` para que reciba peticiones del tipo POST. Además, usaremos `@RequestBody` para capturar el cuerpo de la solicitud que incluirá la entidad `PizzaEntity`.
+
+```java
+@PostMapping("/add")
+public PizzaEntity add(@RequestBody PizzaEntity pizza) {
+    return this.pizzaService.save(pizza);
+}
+
+```
+
+Cuando hacemos una petición POST a nuestro endpoint, estaremos enviando un JSON con los detalles de la pizza. Por ejemplo: nombre, descripción, precio, si es vegana o vegetariana, y su disponibilidad.
+
+Al lanzar la aplicación y enviar esta solicitud, podrás ver que la respuesta te devuelve la pizza creada, con un campo `ID` que no teníamos antes. Esto es porque el ID se genera automáticamente al guardar el registro.
+
+## **¿Cómo manejar actualizaciones de registros existentes?**
+
+Sin embargo, no siempre queremos agregar una nueva pizza; a veces, solo necesitamos actualizar una existente. Aquí es donde Spring Data brilla al verificar si la información en la base de datos cambió. De no ser así, evita actualizar para ahorrar recursos.
+
+Para diferenciar entre crear y actualizar, proponemos crear un método en `PizzaController` llamado `update`. Adornado con `@PutMapping`, este método decidirá entre requerir un `POST` para guardar datos nuevos y un `PUT` para actualizaciones. Incluiremos aquí también la verificación de existencia de pizzas con una llamada a `existsById`.
+
+```java
+@PutMapping("/update")
+public ResponseEntity<?> update(@RequestBody PizzaEntity pizza) {
+    if (pizza.getIdPizza() != null && this.pizzaService.exists(pizza.getIdPizza())) {
+        return new ResponseEntity<>(this.pizzaService.save(pizza), HttpStatus.OK);
+    }
+    return new ResponseEntity<>("Pizza not found or invalid request", HttpStatus.BAD_REQUEST);
+}
+
+```
+
+Este ejemplo muestra cómo validar si la pizza ya existe antes de proceder. En caso contrario, retorna un error `400 Bad Request`.
+
+Spring, gracias al `save`, internamente decide entre un `INSERT` para registros nuevos o un `UPDATE` para actualizaciones.
+
+## **¿Qué ventajas nos otorgan los Spring Data Repositories?**
+
+Lo maravilloso de Spring Data es que automatiza muchas operaciones cruciales, como detectar cambios en la información almacenada. Además, si una pizza ya existe, no ejecutará una acción innecesaria.
+
+Dentro del servicio, hemos creado un método `exists` que retorna un booleano:
+
+```java
+public boolean exists(Long idPizza) {
+    return this.pizzaRepository.existsById(idPizza);
+}
+
+```
+
+Este método hace una consulta `COUNT` y determina si un registro con el ID proporcionado existe. Esta es la magia de Spring Data: facilita las tareas más tediosas y permite que los desarrolladores se concentren más en la lógica de negocios.
+
+Sigue explorando las capacidades de Spring y aprovéchalas en tus proyectos. ¡El aprendizaje es continuo y las oportunidades para mejorar siempre están al alcance!
+
+
+
+# 09-Eliminar elementos con Spring Data JPA: método deleteById
+
+Creado: 8 de octubre de 2025 2:14
+ítem principal: 03-SPRING DATA REPOSITORIES (https://www.notion.so/03-SPRING-DATA-REPOSITORIES-281f5b42f770806c884ce10c3f0d7fd3?pvs=21)
+
+## **¿Cómo eliminar un elemento de la base de datos utilizando Crude Repository en Spring?**
+
+Eliminar un elemento de la base de datos es una operación básica, pero fundamental en cualquier aplicación. Spring Framework facilita este proceso a través de su Crude Repository, ofreciendo métodos intuitivos y directos para gestionar datos con eficacia. Vamos a explorar cómo puedes eliminar un elemento, en este caso una "pixa", utilizando Spring y su Crude Repository.
+
+### **¿Qué es Crude Repository y cómo ayuda en la eliminación?**
+
+Crude Repository es una interfaz que define operaciones básicas para crear, leer, actualizar y eliminar datos en la base de datos, conocidas como operaciones CRUD (por sus siglas en inglés: Created, Read, Update, Delete). Ya hemos explorado cómo leer y guardar datos con el método `save`, pero ahora nos enfocaremos en la operación de eliminación.
+
+### **¿Cómo se implementa un método de eliminación?**
+
+Para eliminar una "pixa" por su identificador único, implementaremos un método que no retorna nada. Este método utilizará `deleteById`, un método proporcionado por Crude Repository específicamente para borrar elementos a partir de su clave primaria.
+
+```java
+public void delete(int idPixa) {
+    this.pixaRepository.deleteById(idPixa);
+}
+
+```
+
+Este método toma como parámetro el ID de la "pixa" y llama al `deleteById`, el cual se encarga de toda la lógica de eliminación.
+
+### **¿Cómo se crea un endpoint para eliminar una entrada?**
+
+En el controlador de la aplicación, debemos definir el endpoint que permita recibir peticiones de eliminación. Utilizaremos `DeleteMapping` para asociar el endpoint HTTP DELETE.
+
+```java
+@DeleteMapping("/{idPizza}")
+public ResponseEntity<Void> delete(@PathVariable int idPizza) throws BadRequestException {
+    this.pizzaService.delete(idPizza);
+    return ResponseEntity.noContent().build();
+}
+```
+
+```java
+public void delete(int idPizza) throws BadRequestException {
+    if (!exists(idPizza)) throw new BadRequestException("Error al eliminar, la pizza no se encuentra");
+    this.pizzaRepository.deleteById(idPizza);
+}
+
+```
+
+1. **Verificación de existencia:** Utilizamos un método `exist` antes de intentar eliminar la pixa, asegurándonos de que efectivamente existe.
+2. **Manejo de respuestas:** Retornamos un `ResponseEntity` vacío con un estado 200 si la eliminación fue exitosa, o un estado 400 si no se pudo realizar.
+
+### **¿Qué sucede detrás de escena al eliminar un elemento?**
+
+Cuando envías una petición para eliminar una "pixa", se piensa comúnmente que es eliminado de manera directa. Sin embargo, bajo el capó, ocurre más:
+
+- **Verificación inicial con `select count`:** Se ejecuta primero este comando para confirmar la existencia del elemento.
+- **Ejecución de eliminación:** Solo después de verificar la existencia, se procede a ejecutar la operación de eliminación con el método `deleteById` transformado en un comando SQL por Hibernate.
+
+### **¿Cómo verificar que una "pixa" ha sido eliminada?**
+
+Después de realizar la operación DELETE, puedes verificar que el elemento ha sido eliminado mediante una consulta GET al servicio:
+
+```java
+// Método en el servicio para obtener una pixa
+public Pixa getById(int idPixa) {
+    return this.pixaRepository.findById(idPixa).orElse(null);
+}
+
+```
+
+Al realizar una petición GET y no obtener respuesta, puedes confirmar que el elemento ya no está en la base de datos.
+
+El poder de Spring Data Repositories radica en su capacidad para simplificar la interacción con la base de datos, relegando al desarrollador a simplemente implementar los métodos necesarios y dejar que Framework maneje el resto. ¡Sigue explorando y aprendiendo! En la próxima lección, veremos cómo gestionar las relaciones en la base de datos con Lazy y Eager.
+
+
+
+
+# 10-Gestión de Relaciones en JPA: Lazy vs Eager Fetching
+
+Creado: 8 de octubre de 2025 14:35
+ítem principal: 03-SPRING DATA REPOSITORIES (https://www.notion.so/03-SPRING-DATA-REPOSITORIES-281f5b42f770806c884ce10c3f0d7fd3?pvs=21)
+
+## **¿Cómo gestionar las relaciones entre entidades en una base de datos?**
+
+Al crear aplicaciones complejas, frecuentemente las entidades en una base de datos comparten relaciones. Estas pueden ser de uno a uno (1:1), muchos a uno (M:1) o uno a muchos (1:M), entre otras. Es vital entender cómo recuperar dichas relaciones, dado que un mal manejo puede afectar severamente el rendimiento de una aplicación. Un manejo eficiente permite evitar accesos innecesarios o sobrecarga de datos.
+
+### **¿Cómo crear y configurar un repositorio para las órdenes?**
+
+Primero, deberemos crear un nuevo repositorio para manejar las órdenes. Para esto, seguiremos los pasos a continuación:
+
+1. **Crear la interfaz OrderRepository**:
+    - Extender de `JpaRepository`.
+    - Usar `OrderEntity` como la entidad y `Integer` como tipo de clave primaria.
+2. **Agregar anotaciones necesarias**:
+    - Incluir `@Getter`, `@Setter` y `@NoArgsConstructor` en nuestras entidades Java para evitar problemas de serialización JSON.
+
+Esta configuración inicial nos proporcionará acceso a métodos predeterminados para gestionar las órdenes sin tener que escribir código adicional.
+
+### **¿Cómo usar los servicios REST para exponer datos?**
+
+A continuación, implementaremos el servicio y el controlador:
+
+1. **Crear el servicio OrderService**:
+    - Anotarlo con `@Service`.
+    - Inyectar el repositorio en el constructor (uso de `final` para asegurar la inyección por constructor).
+    - Crear un método para recuperar todas las órdenes usando `findAll()`.
+2. **Crear el controlador OrderController**:
+    - Utilizar `@RestController`.
+    - Atender peticiones en `API/orders` con `@GetMapping`.
+    - Retornar una respuesta `OK` con la lista de órdenes.
+
+### **¿Cómo solucionar problemas de serialización con JSON?**
+
+Un problema común al serializar entidades es el ciclo infinito causado por relaciones bidireccionales entre entidades, como ocurrió con `OrderEntity` y `OrderItemEntity`. Esto sucede cuando cada entidad intenta cargar los datos de la otra recursivamente. Para resolverlo, podemos:
+
+- Anotar las propiedades de las entidades con `@JsonIgnore` para evitar que ciertas relaciones sean serializadas.
+
+### **¿Cuándo usar Lazy y Eager en las relaciones?**
+
+Las propiedades de `FetchType` determinan cómo se recuperan las relaciones:
+
+- **Lazy**: Retrasa la carga de datos hasta que sean específicamente solicitados. Es útil cuando no necesitamos la relación inmediatamente.
+- **Eager**: Carga la relación al mismo tiempo que la entidad principal. Usada cuando la relación es vital para el funcionamiento de la operación actual.
+
+Ejemplo de configuración:
+
+- Usar `@ManyToOne(fetch = FetchType.LAZY)` para relaciones como cliente en una orden, donde no siempre es necesario cargar la información del cliente.
+- Usar `@OneToMany(fetch = FetchType.EAGER)` para ítems de una orden, si estos son cruciales para procesar cada orden.
+
+### **¿Cómo optimizar la recuperación de relaciones?**
+
+De manera predeterminada, JPA e Hibernate gestionan las siguientes configuraciones por tipo de relación:
+
+- **OneToMany** y **ManyToMany**: Por defecto son Lazy.
+- **ManyToOne** y **OneToOne**: Por defecto son Eager.
+
+Recomendaciones generales:
+
+- Limitar la carga de relaciones a solo las necesarias.
+- Configurar relaciones cómo Lazy siempre que sea posible para mejorar el rendimiento.
+- Si una relación es ampliamente usada, considerar marcarla como Eager.
+
+Con una comprensión clara sobre cómo y cuándo aplicar Lazy o Eager, así como gestionar adecuadamente las relaciones entre entidades, estarás equipado para optimizar el rendimiento y funcionamiento de tu aplicación. ¡Sigue aprendiendo y perfeccionando estos conceptos en tus proyectos!
+
+
+
+# 11-Query Methods en Spring para Consultas Personalizadas
+
+Creado: 9 de octubre de 2025 12:34
+ítem principal: 03-SPRING DATA REPOSITORIES (https://www.notion.so/03-SPRING-DATA-REPOSITORIES-281f5b42f770806c884ce10c3f0d7fd3?pvs=21)
+
+Consultas personalizadas con Query Methods:
+And, Or, True, IgnoreCase & OrderBy
+
+```java
+public interface PizzaRepository extends ListCrudRepository<PizzaEntity, Integer> {
+		// Consultar todas las pizzas disponibles ordenados por percio
+    List<PizzaEntity> findAllByAvailableTrueOrderByPrice();
+		// Consultar todas las pizzas disponibles y por nombre ignorando el case.
+    PizzaEntity findAllByAvailableTrueAndNameIgnoreCase(String name);
+}
+
+```
+
+
+# 12-Filtrado de Pizzas por Ingredientes usando Query Methods
+
+Creado: 9 de octubre de 2025 13:21
+ítem principal: 03-SPRING DATA REPOSITORIES (https://www.notion.so/03-SPRING-DATA-REPOSITORIES-281f5b42f770806c884ce10c3f0d7fd3?pvs=21)
+
+## **¿Cómo utilizar los keywords contains y not en query methods?**
+
+La búsqueda de datos precisa y la manipulación efectiva son habilidades esenciales para cualquier desarrollo de software. En este caso, aprenderemos a usar los keywords `contains` y `not` para construir query methods que nos permiten extraer información específica de nuestros datos. Analizaremos cómo aplicarlos en una base de datos de pizzas identificando ingredientes específicos y controlando sensibilidades de mayúsculas y minúsculas en las consultas.
+
+### **¿Cómo recuperar pizzas disponibles con ciertos ingredientes?**
+
+Para recuperar pizzas que están disponibles y contienen ciertos ingredientes, podemos utilizar el método 
+
+`*List*<PizzaEntity> findAllByAvailableTrueAndDescriptionContainingIgnoreCase(String description);`
+
+Aquí los detalles:
+
+- **Método del servicio:** Se define un método público que retorna una lista de entidades de Pizza y recibe como parámetro un ingrediente.
+- **Implementación:** Se invoca el método del repositorio `findAllByAvailableTrueAndDescriptionContainingIgnoreCase`, pasándole el ingrediente. Este método ignora la diferencia entre mayúsculas y minúsculas gracias a `IgnoreCase`.
+- **Consulta API:** Exponer esta funcionalidad a través de un endpoint en el API REST, permitiendo obtener pizzas por ingrediente solicitando vía HTTP.
+
+```java
+// Service
+public List<PizzaEntity> getWith(String ingredient) {
+    return this.pizzaRepository.findAllByAvailableTrueAndDescriptionContainingIgnoreCase(ingredient);
+}
+
+// Controller
+@GetMapping("/with/{ingredient}")
+public ResponseEntity<List<PizzaEntity>> getWith(@PathVariable String ingredient) {
+    return ResponseEntity.ok(this.pizzaService.getWith(ingredient));
+}
+
+```
+
+### **¿Cómo obtener pizzas que no contienen un ingrediente específico?**
+
+Si necesitamos exactamente el resultado opuesto, pizzas que no contengan un ingrediente en particular, podemos modificar ligeramente el query method utilizando `not`.
+
+- **Ajustar Query Method:** Inserta `not` después de `description` y antes de `containing` para indicar que buscamos pizzas que no tienen el ingrediente proporcionado.
+- **Consulta API:** Similar al anterior, se expone esta funcionalidad a través de otro endpoint.
+
+```java
+@GetMapping("/without/{ingredient}")
+public ResponseEntity<List<PizzaEntity>> getWithOut(@PathVariable String ingredient) {
+    return ResponseEntity.ok(this.pizzaService.getWithOut(ingredient));
+}
+
+```
+
+### **¿Cómo traducir query methods a SQL?**
+
+Los query methods se traducen de manera automática al dialecto específico de SQL de la base de datos que estés utilizando. Por ejemplo, para obtener pizzas disponibles cuya descripción no contiene un ingrediente, el query traducido sería:
+
+```sql
+SELECT * FROM pizza WHERE available = 1 AND UPPER(description) NOT LIKE UPPER(?)
+
+```
+
+En este caso, el `ignoreCase` se refleja en el uso de `UPPER` para ignorar mayúsculas y minúsculas en la búsqueda.
+
+### **Recomendaciones prácticas para implementar query methods**
+
+- **Uso de `ignoreCase`:** Siempre que sea posible, utiliza parámetros como `ignoreCase` para hacer tus consultas más flexibles y evitar problemas por diferencias de capitalización.
+- **Nombres convencionales:** Adopta convenciones de nombres como `finalBy` para mejorar la legibilidad y mantenibilidad del código.
+- **Probar resultados:** Usa herramientas como Postman para testear tus endpoints y verificar la funcionalidad en diferentes escenarios y bases de datos.
+
+Con estas prácticas y ejemplos podrás manipular y consultar datos de manera más precisa y eficiente, abriendo el camino para desarrollos más robustos y adaptables. ¡Continúa explorando y ampliando tus conocimientos sobre bases de datos y query methods!
+
+
+
+# 13-Consultas Avanzadas con Query Methods en Java Spring
+
+Creado: 9 de octubre de 2025 20:45
+ítem principal: 03-SPRING DATA REPOSITORIES (https://www.notion.so/03-SPRING-DATA-REPOSITORIES-281f5b42f770806c884ce10c3f0d7fd3?pvs=21)
+
+## **¿Qué son y cómo utilizar los Query Methods para listas y fechas?**
+
+Los Query Methods son una herramienta poderosa que nos facilitan la recuperación de información de una base de datos mediante el uso de convenciones de nomenclatura específica. A través de ellos, podemos realizar consultas basadas en condiciones como listas o fechas. En este artículo, exploraremos cómo crear un método de consulta que permita recuperar órdenes de una pizzería según una fecha específica.
+
+### **¿Cómo se crean consultas basadas en fechas?**
+
+Para recuperar las órdenes que nuestra pizzería ha tenido hoy, inicialmente, es esencial crear un método en nuestro `OrderRepository`. Este método utilizará la convención `findAllByDateAfter` para obtener órdenes con fecha posterior a una específica:
+
+```java
+public interface OrderRepository extends ListCrudRepository<OrderEntity, Integer> {
+    List<OrderEntity> findAllByDateAfter(LocalDateTime date);
+}
+
+```
+
+Luego, se desarrollará un servicio que utiliza este método para devolver las órdenes del día. Se crea un objeto `LocalDateTime` para obtener la fecha actual:
+
+```java
+@Service
+public class OrderService {
+    public List<OrderEntity> getTodayOrders() {
+        LocalDateTime today = LocalDate.now().atStartOfDay();
+        return orderRepository.findAllByDateAfter(today);
+    }
+}
+
+```
+
+Posteriormente, se crea un `endpoint` en el controlador que utiliza este nuevo servicio para responder a las peticiones:
+
+```java
+@RestController
+@RequestMapping("/orders")
+public class OrderController {
+    @GetMapping("/today")
+    public ResponseEntity<List<OrderEntity>> getTodayOrders() {
+        return ResponseEntity.ok(orderService.getTodayOrders());
+    }
+}
+
+```
+
+### **¿Cómo se gestionan las consultas en listas?**
+
+Además de fechas, los Query Methods también permiten gestionar listas. Supongamos que queremos listar todas las órdenes externas (domicilio o para llevar). Para esto, creamos un `QueryMethod` que use el keyword `IN`.
+
+En el `OrderRepository`, usamos el método `findAllByMethodIn`, recibiendo una lista de métodos de entrega:
+
+```java
+public interface OrderRepository extends ListCrudRepository<OrderEntity, Integer> {
+    List<OrderEntity> findAllByMethodIn(List<String> methods);
+}
+
+```
+
+En esta consulta, se trabaja con una lista de strings que representan los métodos de entrega deseados:
+
+```java
+@Service
+public class OrderService {
+    public List<OrderEntity> getOutsideOrders() {
+        List<String> methods = Arrays.asList("D", "C");
+        return orderRepository.findAllByMethodIn(methods);
+    }
+}
+
+```
+
+Y finalmente, se implementa un `endpoint` para procesar estas consultas:
+
+```java
+@RestController
+@RequestMapping("/orders")
+public class OrderController {
+    @GetMapping("/outside")
+    public ResponseEntity<List<OrderEntity>> getOutsideOrders() {
+        return ResponseEntity.ok(orderService.getOutsideOrders());
+    }
+}
+
+```
+
+### **¿Cómo contar elementos con Query Methods?**
+
+Además de obtener datos específicos, los Query Methods permiten realizar operaciones como contar elementos. Aquí se muestra un ejemplo de cómo contar cuántas pizzas veganas ofrece una pizzería.
+
+En el `PizzaRepository`, se puede usar el método `countBy` para determinar cuántas pizzas tienen una propiedad específica, en este caso, si son veganas:
+
+```java
+public interface PizzaRepository extends ListCrudRepository<PizzaEntity, Integer> {
+    int countByVeganTrue();
+}
+
+```
+
+Podemos aplicar esta lógica en un servicio para imprimir el resultado en la consola:
+
+```java
+@Service
+public class PizzaService {
+    public void countVeganPizzas() {
+        int veganPizzas = pizzaRepository.countByVeganTrue();
+        System.out.println("Número de pizzas veganas: " + veganPizzas);
+    }
+}
+
+```
+
+Al ejecutar esta funcionalidad, el sistema consulta cuántas entradas en la tabla cumplen la condición indicada y nos devuelve el total.
+
+### **¿Qué consideraciones adicionales hay en el uso de query methods?**
+
+- **Facilidad de lectura:** Los Query Methods son intuitivos y permiten entender la lógica de la consulta directamente desde su nombre.
+- **Evitar consultas complejas:** Aunque son poderosos, se recomienda no abusar de su uso para consultas extremadamente complejas, ya que podrían afectar el rendimiento.
+- **Gestión de métodos IN:** Para consultas con el keyword IN, asegúrate de manejar listas de manera adecuada, evitando duplicados y verificando los valores disponibles en la base de datos.
+
+¡Con estos ejemplos de uso de Query Methods para manejar fechas, listas y contar elementos, estarás equipado con las habilidades necesarias para manejar diferentes escenarios en tus aplicaciones! Continúa explorando y aplicando estas técnicas para convertirte en un experto en manejo de bases de datos.
+
+
+
+# 14-Uso de Query Methods para Filtrar y Ordenar Datos en Spring
+
+Creado: 10 de octubre de 2025 0:06
+ítem principal: 03-SPRING DATA REPOSITORIES (https://www.notion.so/03-SPRING-DATA-REPOSITORIES-281f5b42f770806c884ce10c3f0d7fd3?pvs=21)
+
+## **¿Cómo limitar registros con Query Methods en Spring?**
+
+Limitar registros al consultar bases de datos es una tarea fundamental para optimizar la performance de nuestras aplicaciones. En Spring, podemos lograrlo a través de los Query Methods. Estos métodos no solo nos permiten recuperar una cantidad específica de registros, sino también usar elementos de programación funcional como `Optional` para manejar respuestas.
+
+Veamos cómo podemos implementar estas funcionalidades en un ejemplo práctico usando un proyecto de pizzería.
+
+### **¿Cómo asegurarse de que solo un registro se recupere con Query Methods?**
+
+Para limitar la recuperación a un solo registro, no usaremos `findAll`, sino `findFirst`. Este método devuelve el primer registro que coincide con las condiciones definidas. En caso de necesitar más de un registro, `findTop` es la alternativa. Ambos métodos sirven para garantizar el manejo preciso de los datos.
+
+Ejemplo de implementación:
+
+```java
+public interface PizzaRepository extends JpaRepository<PizzaEntity, Long> {
+    Optional<PizzaEntity> findFirstByAvailableTrue();
+}
+
+```
+
+Esto permite obtener la primera pizza disponible. Recuerda ajustar la lógica en el servicio que llame a este método modificado.
+
+### **¿Cómo integrar `Optional` en las consultas?**
+
+`Optional` es un potente aliado para manejar respuestas nulas o excepcionales en Java. Puede emplearse cuando llamamos a un Query Method que podría retornar un valor nulo. Si no se encuentra ningún resultado, podemos lanzar una excepción o devolver un valor por defecto.
+
+Ejemplo de manejo de `Optional`:
+
+```java
+Optional<PizzaEntity> optionalPizza = pizzaRepository.findFirstByAvailableTrue();
+PizzaEntity pizza = optionalPizza.orElseThrow(() -> new RuntimeException("La pizza no existe"));
+
+```
+
+O, alternativamente:
+
+```java
+PizzaEntity pizza = optionalPizza.orElseGet(() -> {
+    // Lógica alternativa si la pizza no existe
+    return new DefaultPizza();
+});
+
+```
+
+### **¿Cómo encontrar las pizzas más baratas?**
+
+Podemos crear métodos para encontrar, por ejemplo, las tres pizzas más baratas. Utilizamos `findTop3By` para restringir la cantidad de registros. Asimismo, `OrderBy` permite ordenar estos registros según una propiedad, como el precio.
+
+Ejemplo de búsqueda de pizzas económicas:
+
+```java
+List<PizzaEntity> findTop3ByAvailableTrueAndPriceLessThanEqualOrderByPriceAsc(Double price);
+
+```
+
+Este método recupera las tres pizzas más baratas disponibles que cuestan menos de un valor dado, ordenándolas de manera ascendente.
+
+### **¿Cómo invocar estos métodos desde el servicio?**
+
+Una vez definidos en el repositorio, invocamos estos métodos desde un servicio. Creamos un método que pase el precio como parámetro a nuestro Query Method.
+
+```java
+public List<PizzaEntity> getCheapestPizzas(Double price) {
+    return pizzaRepository.findTop3ByAvailableTrueAndPriceLessThanEqualOrderByPriceAsc(price);
+}
+
+```
+
+### **¿Cómo verificar consultas en el controlador?**
+
+Finalmente, modificamos el controlador para permitir que los clientes consulten las pizzas más baratas al proporcionar un cierto precio:
+
+```java
+@GetMapping("/pizzas/cheapest/{price}")
+public List<PizzaEntity> getCheapestPizzas(@PathVariable Double price) {
+    return pizzaService.getCheapestPizzas(price);
+}
+
+```
+
+Esta consulta se ejecuta y devuelve las tres pizzas más económicas cumpliendo las condiciones mencionadas. Además, es importante revisar la consulta SQL que se genera y asegurarse de que los resultados se limiten adecuadamente.
+
+Estos son algunos ejemplos de cómo se pueden utilizar los Query Methods para lograr búsquedas eficientes y personalizadas. Estimula explorar más sobre esta funcionalidad. Para profundizar, consulta los recursos adicionales que ofrecen documentación detallada. Continuar aprendiendo y explorando te permitirá sacar el máximo provecho de las poderosas herramientas de Spring.
+
+
+
+# 15-Paginación y Ordenación con Spring Data Repositories
+
+Creado: 10 de octubre de 2025 1:54
+ítem principal: 03-SPRING DATA REPOSITORIES (https://www.notion.so/03-SPRING-DATA-REPOSITORIES-281f5b42f770806c884ce10c3f0d7fd3?pvs=21)
+
+## **¿Qué es el Paging and Sorting Repository en Spring Data?**
+
+El Paging and Sorting Repository es una herramienta poderosa dentro de Spring Data que permite gestionar y estructurar grandes volúmenes de datos, haciendo posible paginar y organizar consultas de manera eficiente. Es especialmente útil cuando se trabaja con grandes cantidades de información o simplemente cuando se quiere presentar datos de forma más manejable y accesible.
+
+### **¿Cómo crear un repositorio de Paging and Sorting?**
+
+Para crear un repositorio de Paging and Sorting en un proyecto de Spring, es necesario extender directamente de `PagingAndSortingRepository`. Aquí te muestro un ejemplo:
+
+```java
+public interface PizzaPagSortRepository extends ListPagingAndSortingRepository<PizzaEntity, Integer> {
+}
+```
+
+- `PizzaEntity` es la clase que representa la entidad o modelo que estamos gestionando.
+- `Integer` es el tipo de dato para la clave primaria.
+
+### **¿Cómo implementar el repositorio en un servicio?**
+
+El siguiente paso es inyectar este repositorio en el servicio para poder llevar a cabo las operaciones deseadas. A continuación te muestro cómo hacerlo:
+
+1. Inyecta el repositorio usando la anotación `@Autowired`.
+
+```java
+@Autowired
+private final PizzaPagSortRepository pizzaPagSortRepository;
+
+```
+
+1. Modifica el método `GetAll` para hacerlo paginado:
+
+```java
+public Page<PizzaEntity> getAll(int page, int elements){
+    Pageable pageRequest = PageRequest.of(page, elements);
+    return this.pizzaPagSortRepository.findAll(pageRequest);
+}
+
+```
+
+- Aquí `PageRequest.of(int page, int elements)` crea un objeto `Pageable` que define el número de la página y el tamaño de la página, es decir, cuántos elementos tendrá cada una.
+
+### **¿Cómo gestionar la paginación en el controlador?**
+
+Dentro del controlador, es fundamental recibir los parámetros que indican el número de página y el tamaño de los elementos por página. Estos se manejan como parámetros de petición:
+
+```java
+@GetMapping
+public ResponseEntity<Page<PizzaEntity>> getAll(
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "8") int elements
+) {
+    return ResponseEntity.ok(this.pizzaService.getAll(page, elements));
+}
+
+```
+
+- `@RequestParam` se utiliza para capturar los parámetros de la URL de manera sencilla. También se pueden definir valores por defecto, como `0` para page y `8` para elements.
+
+### **¿Qué ventajas ofrece el Paging and Sorting Repository?**
+
+El uso del Paging and Sorting Repository trae consigo varias ventajas significativas:
+
+- **Eficiencia**: Permite manejar y consultar grandes cantidades de datos de manera efectiva, evitando sobrecargar el sistema.
+- **Flexibilidad**: Comodidad de configurar el tamaño de página y el número de página según las necesidades del usuario.
+- **Simplicidad**: Es fácil de implementar y no requiere código complejo, lo que facilita su integración en aplicaciones existentes.
+
+La implementación de un Paging and Sorting Repository optimiza la forma en que presentamos y manejamos la información, garantizando que se pueda acceder a los datos de manera rápida y efectiva. ¡Sigue explorando sus capacidades y verás cómo facilita tu gestión de datos en aplicaciones Spring!
+
+
+
+# 16-Ordenamiento Dinámico con Paging and Sorting Repository
+
+Creado: 10 de octubre de 2025 2:52
+ítem principal: 03-SPRING DATA REPOSITORIES (https://www.notion.so/03-SPRING-DATA-REPOSITORIES-281f5b42f770806c884ce10c3f0d7fd3?pvs=21)
+
+## **¿Cómo implementar un ordenamiento dinámico en un repositorio en Spring?**
+
+Imagina que puedes controlar la manera en que los datos se presentan, no solo la cantidad de información como con la paginación, sino también el orden en que estos aparecen. Eso es precisamente lo que lograremos con el Paging and Sorting Repository en Spring. Este tutorial te guiará en la implementación de un sistema que facilita tanto la paginación como el ordenamiento dinámico de datos en tus aplicaciones.
+
+### **¿Cómo crear un nuevo método de consulta con paginación y ordenamiento?**
+
+Para comenzar, es crucial entender que nuestro nuevo método de consulta no retornará una lista, sino que regresará una página de nuestra entidad. En este ejemplo, la entidad se llama `PizzaEntity`. Crearemos un método llamado `FindByAvailableTrue` que, usando el Paging and Sorting Repository, nos permitirá consultar todas las entidades disponibles.
+
+```java
+public interface PizzaPagSortRepository extends ListPagingAndSortingRepository<PizzaEntity, Integer> {
+    Page<PizzaEntity> findByAvailableTrue(Pageable pageable);
+}
+
+```
+
+Este método recibe un objeto `Pageable`, el cual es esencial para gestionar tanto la paginación como el ordenamiento de manera efectiva.
+
+### **¿Cómo manejar los parámetros de paginación y ordenamiento?**
+
+Para realizar consultas paginadas y ordenadas, debemos considerar ciertos parámetros: la página que queremos consultar, cuántos elementos incluir en cada página, y la columna por la cual deseamos ordenar los resultados. Esto lo controlamos a través de un `PageRequest`, que envía un tercer elemento, el `Sort`, junto con el string `sortBy`.
+
+Modificaré el servicio para ajustar el tipo de retorno y enviar los parámetros necesarios al repositorio:
+
+```java
+public Page<PizzaEntity> getAvailable(int page, int elements, String sortBy, String sortDirection) {
+    Sort sort = Sort.by(Sort.Direction.fromString(sortDirection), sortBy);
+    Pageable pageRequest = PageRequest.of(page, elements, sort);
+    return this.pizzaPagSortRepository.findByAvailableTrue(pageRequest);
+}
+
+```
+
+En este caso, el resultado será una página que podemos pasar posteriormente al controlador.
+
+### **¿Cómo se actualiza el controlador para recibir parámetros?**
+
+El siguiente paso es actualizar el controlador de nuestra aplicación para que pueda manejar nuevos parámetros de entrada. Utilizaremos `RequestParam` para recibir el `sortBy` y asignar un valor por defecto como "price":
+
+```java
+@GetMapping("/available")
+public ResponseEntity<Page<PizzaEntity>> getAvailable(
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "8") int elements,
+        @RequestParam(defaultValue = "price") String sortBy,
+        @RequestParam(defaultValue = "ASC") String sortDirection
+) {
+    return ResponseEntity.ok(this.pizzaService.getAvailable(page, elements, sortBy, sortDirection));
+}
+```
+
+Esto nos permitirá, por defecto, ordenar los resultados por el precio de las pizzas.
+
+### **¿Cómo configurar el ordenamiento ascendente o descendente?**
+
+Agregar la capacidad de ordenar ascendentemente o descendentemente brinda flexibilidad adicional a nuestros métodos de consulta. Para ello, introducimos un nuevo parámetro llamado `sortDirection`, el cual predeterminamos como ascendente:
+
+```java
+@RequestParam(defaultValue = "ASC") String sortDirection
+
+```
+
+Con este cambio, podemos construir un objeto `Sort` que reaccione a este parámetro:
+
+```java
+Sort sort = Sort.by(Sort.Direction.fromString(sortDirection), sortBy);
+PageRequest pageRequest = PageRequest.of(page, size, sort);
+
+```
+
+Implementar este ajuste en el controlador nos da la opción de manejar consultas que ordenen datos en ambas direcciones sin esfuerzo adicional.
+
+### **¿Qué beneficios proporciona el uso de Page Unsorting Repository?**
+
+Integrar paginación y ordenamiento dinámico en tu aplicación mejora significativamente la experiencia del usuario final. No solo le permite acceder a grandes volúmenes de datos de manera más efectiva, sino que también le da control sobre la manera en que se presenta la información. Esto es un gran paso hacia el desarrollo de aplicaciones web potentes y adaptables. ¡Utiliza estas técnicas en tus proyectos y observa la diferencia!
+
+
+
+
 
 
 
