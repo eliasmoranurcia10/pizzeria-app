@@ -1475,6 +1475,107 @@ Este proceso de implementar queries nativos y refinar el rendimiento del sistema
 
 
 
+# 19-Uso de Proyecciones en Queries Personalizados con Java y SQL
+
+Creado: 11 de octubre de 2025 12:50
+ítem principal: 04-PERSONALIZACION DE QUERIES (https://www.notion.so/04-PERSONALIZACION-DE-QUERIES-281f5b42f77080119c8ee39f9d5d158d?pvs=21)
+
+## **¿Qué son las projections y cómo funcionan en Java?**
+
+Las **projections** son DTOs (Data Transfer Objects) que nos permiten definir una estructura personalizada para recuperar datos específicos de una base de datos. Son especialmente útiles cuando requerimos construir consultas complejas que no se ajustan completamente a los campos de una sola tabla. Imagina que en un proyecto de una Pixería, necesitas detalles de una orden que involucran varias tablas: el identificador de la orden, la fecha, y el total están en "PixaOrder," pero para el nombre del cliente consultarías la tabla "Customer," y para los nombres de las pizzas usarías la tabla "Pixa." Las projections ofrecen una forma eficiente de manejar estos casos.
+
+### **¿Cómo crear una proyección?**
+
+Para crear una proyección en tu aplicación, debes seguir estos pasos:
+
+1. **Crear una interfaz**: Define una interfaz, por ejemplo, `OrderSummary`, que contenga los métodos con los atributos que deseas recuperar en tu consulta.
+
+```java
+public interface OrderSummary {
+    Integer getIdOrder();
+    String getCustomerName();
+    LocalDateTime getOrderDate();
+    Double getOrderTotal();
+    String getPizzaNames();
+}
+
+```
+
+1. **Escribir la consulta SQL**: Redacta un query SQL que recupere los datos necesarios de la base de datos. Usa `JOIN` para unir las tablas relevantes.
+
+```sql
+SELECT 
+	po.id_order AS idOrder, cu.name AS customerName, po.date AS orderDate, 
+    po.total AS orderTotal, group_concat(pi.name) AS pizzaNames
+FROM pizza_order po
+INNER JOIN customer cu ON po.id_customer=cu.id_customer
+INNER JOIN order_item oi ON po.id_order=oi.id_order
+INNER JOIN pizza pi ON oi.id_pizza=pi.id_pizza
+WHERE po.id_order = 1
+GROUP BY po.id_order, cu.name, po.date, po.total;
+
+```
+
+### **¿Cómo usamos la proyección en el código?**
+
+Después de crear la interfaz y la consulta, el siguiente paso es integrarla con el código de la aplicación:
+
+1. **Definir el repositorio**: Crea un método en tu repositorio que retorne el tipo de interfaz `OrderSummary` y anota este método con `@Query`.
+
+```java
+public interface OrderRepository extends ListCrudRepository<OrderEntity, Integer> {
+
+    @Query(
+      value = """
+              SELECT\s
+              	po.id_order AS idOrder, cu.name AS customerName, po.date AS orderDate,\s
+                  po.total AS orderTotal, group_concat(pi.name) AS pizzaNames
+              FROM pizza_order po
+              INNER JOIN customer cu ON po.id_customer=cu.id_customer
+              INNER JOIN order_item oi ON po.id_order=oi.id_order
+              INNER JOIN pizza pi ON oi.id_pizza=pi.id_pizza
+              WHERE po.id_order = :orderId
+              GROUP BY po.id_order, cu.name, po.date, po.total;
+              """,
+      nativeQuery = true
+    )
+    OrderSummary findSummary(@Param("orderId") int orderId);
+}
+
+```
+
+1. **Implementar el servicio**: Añade un método en tu servicio que use el repositorio para obtener el resumen de la orden.
+
+```java
+public OrderSummary getSummary(int orderId) {
+    return this.orderRepository.findSummary(orderId);
+}
+
+```
+
+1. **Exponer en el controlador**: Finalmente, crea un endpoint en el controlador para responder con esta proyección.
+
+```java
+    @GetMapping("/summary/{id}")
+    public ResponseEntity<OrderSummary> getOrderSummary(@PathVariable int id) {
+        return ResponseEntity.ok(this.orderService.getSummary(id));
+    }
+
+```
+
+### **¿Cuál es el beneficio de usar projections?**
+
+Las projections ofrecen varias ventajas:
+
+- **Eficiencia**: Se evita cargar entidades enteras con todas sus relaciones, mejorando la performance.
+- **Claridad**: Hacen que el código sea más legible y facilitan la comprensión de lo que se está recuperando.
+- **Flexibilidad**: Proveen una forma simple de definir y alterar estructuras de datos retornadas sin cambiar la lógica del query.
+
+Así que, ¿a qué esperas para implementar esta técnica? Aprovecha las proyecciones para optimizar tus consultas y hacer tu aplicación más eficiente. ¿Quieres más? Continúa perfeccionando tus habilidades en Java y base de datos, existen demasiadas herramientas y tácticas por descubrir.
+
+
+
+
 
 
 
