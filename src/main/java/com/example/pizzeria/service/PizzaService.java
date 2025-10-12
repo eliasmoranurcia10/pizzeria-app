@@ -4,6 +4,7 @@ import com.example.pizzeria.persistence.entity.PizzaEntity;
 import com.example.pizzeria.persistence.repository.PizzaPagSortRepository;
 import com.example.pizzeria.persistence.repository.PizzaRepository;
 import com.example.pizzeria.service.dto.UpdatePizzaPriceDto;
+import com.example.pizzeria.service.exception.EmailApiException;
 import lombok.AllArgsConstructor;
 import org.apache.coyote.BadRequestException;
 import org.springframework.data.domain.Page;
@@ -11,6 +12,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -74,10 +76,15 @@ public class PizzaService {
         this.pizzaRepository.deleteById(idPizza);
     }
 
-    @Transactional
+    @Transactional(noRollbackFor = EmailApiException.class, propagation = Propagation.REQUIRED)
     public void updatePrice(UpdatePizzaPriceDto dto) throws BadRequestException {
         if (!exists(dto.getPizzaId())) throw new BadRequestException("Error al actualizar, la pizza no se encuentra");
         this.pizzaRepository.updatePrice(dto);
+        this.sendEmail();
+    }
+
+    private void sendEmail() {
+        throw new EmailApiException();
     }
 
     public boolean exists(int idPizza) {

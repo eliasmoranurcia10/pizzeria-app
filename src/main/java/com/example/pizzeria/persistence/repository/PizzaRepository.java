@@ -2,6 +2,7 @@ package com.example.pizzeria.persistence.repository;
 
 import com.example.pizzeria.persistence.entity.PizzaEntity;
 import com.example.pizzeria.service.dto.UpdatePizzaPriceDto;
+import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.ListCrudRepository;

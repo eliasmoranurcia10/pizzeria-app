@@ -1657,6 +1657,96 @@ En resumen, estas técnicas avanzadas de modificación de datos utilizando anota
 
 
 
+# 21-Propiedades ACID y Spring Data: Uso de @Transactional
+
+Creado: 12 de octubre de 2025 15:24
+ítem principal: 04-PERSONALIZACION DE QUERIES (https://www.notion.so/04-PERSONALIZACION-DE-QUERIES-281f5b42f77080119c8ee39f9d5d158d?pvs=21)
+
+## **¿Qué es ACID y por qué es vital en las transacciones de bases de datos?**
+
+Cuando trabajamos con bases de datos en nuestras aplicaciones, la integridad y confiabilidad de las transacciones son esenciales para asegurar que la información almacenada esté siempre precisa y segura. ACID es un conjunto de cuatro propiedades que toda transacción debe cumplir para garantizar su confiabilidad.
+
+1. **Atomicidad**: Esta propiedad asegura que las transacciones sean "todo o nada". Si un error ocurre durante la ejecución, se realiza un rollback para restaurar el estado inicial.
+2. **Consistencia**: Valida que las transacciones solo realicen operaciones que mantienen la integridad de la información. Esto garantiza que las bases de datos no se corrompan con datos inválidos.
+3. **Aislamiento**: Garantiza que las transacciones se ejecuten de manera independiente, evitando que los datos se mezclen entre operaciones concurrentes.
+4. **Durabilidad**: Asegura que la información persista a lo largo del tiempo, incluso si la base de datos se apaga y se vuelve a encender.
+
+## **¿Cómo implementa Spring Data JPA ACID con @Transactional?**
+
+Spring Data JPA proporciona la anotación `@Transactional` para manejar las propiedades ACID en transacciones que involucran múltiples operaciones de base de datos.
+
+- Al anotar un método con `@Transactional`, se asegura que las transacciones sean atómicas, aisladas, durables y consistentes.
+- Es vital usar `@Transactional` cuando se hacen múltiples llamados a la base de datos desde un mismo método, ya que asegura que las operaciones se ejecuten de manera integral.
+
+Por ejemplo, al actualizar el precio de una pizza:
+
+```java
+@Transactional
+public void updatePrice(UpdatePizzaPriceDto dto) throws BadRequestException {
+    if (!exists(dto.getPizzaId())) {
+			  throw new BadRequestException("Error al actualizar, la pizza no se encuentra");
+	  }
+    this.pizzaRepository.updatePrice(dto);
+    this.sendEmail();
+}
+
+private void sendEmail() {
+    throw new EmailApiException();
+}
+
+```
+
+## **¿Qué sucede al manejar excepciones y rollback con Spring Data JPA?**
+
+En ocasiones, puede que necesitemos manejar excepciones durante una transacción de manera específica, especialmente cuando ciertos errores no deben provocar un rollback.
+
+- **`noRollbackFor`**: Esta propiedad de `@Transactional` nos permite especificar las excepciones para las cuales no deseamos realizar un rollback. Por ejemplo, si un error al enviar un correo no debería revertir una actualización de precio.
+
+```java
+@Transactional(noRollbackFor = EmailApiException.class)
+public void updatePrice(UpdatePizzaPriceDto dto) throws BadRequestException {
+    if (!exists(dto.getPizzaId())) {
+		    throw new BadRequestException("Error al actualizar, la pizza no se encuentra");
+    }
+    this.pizzaRepository.updatePrice(dto);
+    this.sendEmail();
+}
+
+private void sendEmail() {
+    throw new EmailApiException();
+}
+
+```
+
+## **¿Qué papel juega la propagación en @Transactional?**
+
+La propiedad de propagación especifica cómo gestionar las transacciones existentes al llamar a métodos anotados con `@Transactional`.
+
+```java
+@Transactional
+@Tra(noRollbackFor = EmailApiException.class, propagation = Propagation.REQUIRED)
+public void updatePrice(UpdatePizzaPriceDto dto) throws BadRequestException {
+    if (!exists(dto.getPizzaId())) {
+		    throw new BadRequestException("Error al actualizar, la pizza no se encuentra");
+    }
+    this.pizzaRepository.updatePrice(dto);
+    this.sendEmail();
+}
+
+private void sendEmail() {
+    throw new EmailApiException();
+}
+```
+
+- **Required (por defecto)**: Se usará una transacción existente o se creará una nueva si no hay.
+- **Mandatory**: Requiere que ya exista una transacción y lanzará una excepción si no la hay.
+
+La documentación de Spring ofrece detalles extensos sobre otros tipos de propagación, los cuales puedes consultar para decidir cuál es el más adecuado para tus casos específicos.
+
+En resumen, la anotación `@Transactional` en Spring Data JPA no solo asegura que las transacciones adheridas a ACID se ejecuten correctamente, sino que también ofrece flexibilidad al manejar excepciones y la posibilidad de personalizar la propagación de transacciones. Abordar estos aspectos te permite crear aplicaciones más robustas y confiables.
+
+
+
 
 
 
