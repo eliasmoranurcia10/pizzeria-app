@@ -1748,6 +1748,111 @@ En resumen, la anotación `@Transactional` en Spring Data JPA no solo asegura 
 
 
 
+# 22-Auditoría de Entidades con Spring Data JPA
+
+Creado: 12 de octubre de 2025 18:11
+ítem principal: 05-CARACTERÍSTICAS AVANZADAS (https://www.notion.so/05-CARACTER-STICAS-AVANZADAS-281f5b42f77080b6a0a1efd8652cfb07?pvs=21)
+
+## **¿Qué es la auditoría en bases de datos y por qué es importante?**
+
+La auditoría en bases de datos es fundamental para el control y el manejo eficiente de los datos. Saber quién realizó cambios, qué cambios se hicieron y cuándo se realizaron es crucial para garantizar la integridad y la seguridad de los datos. En el contexto de las bases de datos, la auditoría ayuda a mantener un registro detallado de todas estas operaciones, lo cual puede ser invaluable en situaciones donde se necesite rastrear acciones o corregir errores.
+
+## **¿Cómo implementar la auditoría con Spring Data JPA?**
+
+Spring Data JPA simplifica la implementación de auditorías mediante anotaciones que proporcionan una forma casi transparente de auditar entidades.
+
+### **¿Qué configuraciones iniciales se necesitan?**
+
+Para activar la funcionalidad de auditoría de JPA, es necesario modificar la clase principal del proyecto:
+
+1. Asegúrate de que la clase tiene la anotación `@SpringBootApplication`.
+2. Añade la anotación `@EnableJpaRepositories`.
+3. Incluye `@EnableJpaAuditing` para habilitar la auditoría.
+
+```java
+@SpringBootApplication
+@EnableJpaRepositories
+@EnableJpaAuditing
+public class Application { ... }
+
+```
+
+### **¿Cómo auditar una entidad específica?**
+
+Para auditar una entidad, como `PixaEntity`, necesitarás:
+
+1. Añadir el `AuditingEntityListener` a la entidad.
+2. Añadir columnas de tipo `LocalDateTime` para las fechas de creación y modificación.
+3. Usar anotaciones de Spring Data como `@CreatedDate` y `@LastModifiedDate` para estas columnas.
+
+```java
+@EntityListeners(AuditingEntityListener.class)
+public class PizzaEntity {
+    // otras columnas...
+
+    @Column(name = "created_date")
+    @CreatedDate
+    private LocalDateTime createdDate;
+
+    @Column(name = "modified_date")
+    @LastModifiedDate
+    private LocalDateTime modifiedDate;
+}
+
+```
+
+### **¿Cómo evitar que las fechas de auditoría se incluyan en la respuesta de JSON?**
+
+Las columnas de auditoría pueden no ser relevantes para el usuario final. Utiliza la anotación `@JsonIgnore` para excluir estas columnas de la respuesta JSON.
+
+```java
+@JsonIgnore
+@CreatedDate
+private LocalDateTime createdDate;
+
+@JsonIgnore
+@LastModifiedDate
+private LocalDateTime modifiedDate;
+
+```
+
+## **¿Cómo evitar la duplicación de columnas de auditoría?**
+
+Para evitar la duplicación de código al tener que añadir estas columnas a múltiples entidades, puedes crear una superclase que defina estos campos de auditoría y luego extenderla desde tus otras entidades.
+
+```java
+@MappedSuperclass
+public class AuditableEntity {
+
+    @Column(name = "created_date")
+    @CreatedDate
+    private LocalDateTime createDate;
+
+    @Column(name = "modified_name")
+    @LastModifiedDate
+    private LocalDateTime modifiedDate;
+}
+
+...
+@EntityListeners(AuditingEntityListener.class)
+...
+public class PizzaEntity extends AuditableEntity { ... }
+
+```
+
+## **¿Qué beneficios ofrece la auditoría de entidades?**
+
+Con una implementación adecuada de auditoría:
+
+- Monitorea y controla cambios en los datos.
+- Mejora la transparencia en el manejo de información.
+- Ayuda a proteger contra el acceso no autorizado o modificaciones indeseadas.
+- Proporciona información valiosa para resolver incidencias futuras.
+
+Con estos pasos y configuraciones, estarás equipado para implementar un sistema robusto de auditoría utilizando Spring Data JPA, reduciendo la complejidad y mejorando la gestión de cambios en tus bases de datos. ¡Sigue explorando y aprendiendo para sacar el máximo provecho de las herramientas de Spring!
+
+
+
 
 
 
