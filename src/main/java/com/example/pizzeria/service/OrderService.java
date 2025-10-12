@@ -1,6 +1,7 @@
 package com.example.pizzeria.service;
 
 import com.example.pizzeria.persistence.entity.OrderEntity;
+import com.example.pizzeria.persistence.projection.OrderSummary;
 import com.example.pizzeria.persistence.repository.OrderRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -34,5 +35,13 @@ public class OrderService {
     public List<OrderEntity> getOutsideOrders() {
         List<String> methods = Arrays.asList(DELIVERY,CARRYOUT);
         return this.orderRepository.findAllByMethodIn(methods);
+    }
+
+    public List<OrderEntity> getCustomerOrders(String idCustomer) {
+        return this.orderRepository.findCustomerOrders(idCustomer);
+    }
+
+    public OrderSummary getSummary(int orderId) {
+        return this.orderRepository.findSummary(orderId);
     }
 }

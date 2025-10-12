@@ -1316,6 +1316,437 @@ Integrar paginación y ordenamiento dinámico en tu aplicación mejora significa
 
 
 
+# 17-Consultas de Base de Datos con JPQL en Spring Boot
+
+Creado: 10 de octubre de 2025 12:39
+ítem principal: 03-SPRING DATA REPOSITORIES (https://www.notion.so/03-SPRING-DATA-REPOSITORIES-281f5b42f770806c884ce10c3f0d7fd3?pvs=21)
+
+## **¿Qué es JPQL y cómo utilizarlo?**
+
+JPQL, o Java Persistent Query Language, es un lenguaje que se utiliza para realizar consultas sobre una base de datos desde las Entities en vez de las tablas tradicionales. Esto permite trabajar de manera más intuitiva para los desarrolladores en Java, ya que se utilizan atributos de objetos en lugar de columnas y tablas.
+
+### **¿Cómo crear un `CustomerRepository`?**
+
+Para manejar la información de los clientes almacenada en la base de datos, primero necesitamos crear un repositorio. Vamos a seguir estos pasos:
+
+1. Crear un `CustomerRepository` que extiende de `ListCloudRepository`.
+2. Utilizar la `CustomerEntity` para definir el tipo de la clave primaria, que en este caso es un `String`.
+3. Implementar un método para realizar consultas usando JPQL.
+
+```java
+public interface CustomerRepository extends ListCrudRepository<CustomerEntity, String> {
+
+    @Query(value = "SELECT c FROM CustomerEntity c WHERE c.phoneNumber = :phone")
+    CustomerEntity findByPhone(@Param("phone") String phone);
+}
+```
+
+### **¿Cómo configurar el servicio de clientes?**
+
+Una vez definido el repository, es fundamental crear un servicio que lo integre y lo use para gestionar la lógica de negocio relacionada con la consulta de clientes:
+
+1. Inyectar `CustomerRepository` en `CustomerService`.
+2. Habilitar la inyección de dependencias con la anotación `@Service`.
+3. Implementar el método `findByPhone` que va a recibir un `teléfono` y utilizar el repository para la consulta.
+
+```java
+@Service
+@AllArgsConstructor
+public class CustomerService {
+
+    private final CustomerRepository customerRepository;
+
+    public CustomerEntity findByPhone(String phone) {
+        return this.customerRepository.findByPhone(phone);
+    }
+}
+
+```
+
+### **¿Cómo construir el controlador de clientes?**
+
+El siguiente paso es crear un controlador que exponga endpoints HTTP para manejar las solicitudes relativas a los clientes:
+
+1. Anotar el controlador con `@RestController` y `@RequestMapping("/api/customers")`.
+2. Inyectar el `CustomerService` en el controlador usando `@Autowired` (aunque no es obligatorio).
+3. Implementar el método `getByPhone` que atenderá las peticiones GET y devolverá la información de un cliente en base a su número de teléfono.
+
+```java
+@RestController
+@RequestMapping("/api/customers")
+@AllArgsConstructor
+public class CustomerController {
+    private final CustomerService customerService;
+
+    @GetMapping("/phone/{phone}")
+    public ResponseEntity<CustomerEntity> getByPhone(@PathVariable String phone) {
+        return ResponseEntity.ok(this.customerService.findByPhone(phone));
+    }
+}
+
+```
+
+### **Ejecución y verificación de la aplicación**
+
+Ya listo el controlador, es el momento de poner la aplicación en ejecución y probar el endpoint creado. Al realizar una solicitud GET a `/api/customers/fund/{phone}`, se espera recibir toda la información del cliente asociado al número de teléfono proporcionado. Si todo se ha hecho de manera correcta, la API responderá con estado 200 y los detalles del usuario.
+
+JPQL muestra su fortaleza en su facilidad de uso al trabajar con OOP y su similitud en sintaxis con SQL estándar. Sin embargo, es importante considerar que SQL nativo ofrece características avanzadas no disponibles en JPQL, lo que podría ser un aspecto a explorar en clases futuras para ampliar nuestras habilidades de consulta. ¡Sigue explorando y potenciando tus habilidades en desarrollo con Java y consulta de bases de datos!
+
+
+
+
+# 18-Consultas SQL nativas y ordenación con Hibernate en Spring Data
+
+Creado: 10 de octubre de 2025 14:30
+ítem principal: 04-PERSONALIZACION DE QUERIES (https://www.notion.so/04-PERSONALIZACION-DE-QUERIES-281f5b42f77080119c8ee39f9d5d158d?pvs=21)
+
+## **¿Cuál es la utilidad de trabajar con queries nativos en Spring Data?**
+
+Trabajar con queries nativos en Spring Data nos proporciona una flexibilidad impresionante, ya que nos permite operar directamente con SQL y aprovechar todas las características que una base de datos particular soporta. A diferencia de los Query Methods o JPQL, que pueden tener limitaciones en algunos escenarios específicos, los queries nativos nos liberan de estas restricciones e incrementan nuestras opciones de implementación.
+
+### **¿Cómo se crea un método para consultas específicas en la base de datos?**
+
+Para ilustrar el uso de queries nativos, vamos a crear un método que permita consultar las órdenes de un cliente específico dentro del sistema de una pizzería. Este ejemplo te proporcionará una comprensión sólida sobre cómo organizar y ejecutar una consulta directa en SQL desde Spring Data.
+
+1. **Identificar el Repositorio**: Comienza creando el método en el repositorio que necesites, en este caso, el `OrderRepository`.
+2. **Definir el Método**: Crea un método que retorne una lista de órdenes, llamémosle `findCustomerOrders`.
+3. **Anotación @Query**: Usa la anotación `@Query` para definir el SQL nativo que se desea ejecutar. En este caso:
+
+    ```java
+    public interface OrderRepository extends ListCrudRepository<OrderEntity, Integer> {
+    
+        @Query(value = "SELECT * FROM pizza_order WHERE id_customer = :id", nativeQuery = true)
+        List<OrderEntity> findCustomerOrders(@Param("id") String idCustomer);
+    }
+    
+    ```
+
+4. **Marcado de Parámetros**: Con `@Param`, asocia parámetros que se recibirán en el método.
+
+### **¿Cómo integrar el método en el servicio adecuado?**
+
+Una vez definido el método en el repositorio, necesitas incorporarlo en el servicio donde se consumirá:
+
+1. **Implementar método en el Service**: Crea un método que devuelva una lista de órdenes, llamémosle `getCustomerOrders`, donde se recibirá el `idCustomer`.
+
+    ```java
+    public List<OrderEntity> getCustomerOrders(String idCustomer) {
+        return this.orderRepository.findCustomerOrders(idCustomer);
+    }
+    
+    ```
+
+
+### **¿Cómo especificar el método en un punto de acceso API?**
+
+Para exponer este método a través de una API, añade un endpoint GET en el controlador:
+
+1. **Definición en el controlador**: Emplea la anotación `@GetMapping` para definir el endpoint, asegurando que se recibe el `idCustomer` como variable de ruta.
+
+    ```java
+    @GetMapping("/customer/{id}")
+    public ResponseEntity<List<OrderEntity>> getCustomerOrders(@PathVariable String id) {
+        return ResponseEntity.ok(this.orderService.getCustomerOrders(id));
+    }
+    ```
+
+
+### **¿Cómo gestionar ordenación de elementos en las respuestas?**
+
+Es frecuente que quieras ordenar los resultados de tus consultas. Puedes utilizar la anotación `@OrderBy` para ordenar los elementos antes de devolverlos.
+
+1. **Implementación de @OrderBy**: Si deseas ordenar por precio, agrega la anotación en la entidad:
+
+    ```java
+    @OrderBy("price ASC")
+    private List<OrderItemEntity> orderItems;
+    
+    ```
+
+
+### **¿Cómo solucionar problemas y errores comunes?**
+
+Al ejecutar la aplicación, es posible que encuentres errores como el 500 debido a conflictos al llamar métodos. Asegúrate de:
+
+- No llamar de manera recursiva el mismo servicio.
+- Corregir cualquier referencia incorrecta a métodos, por ejemplo, usar `orderRepository.findCustomerOrders` en lugar de una llamada recursiva incorrecta.
+
+Este proceso de implementar queries nativos y refinar el rendimiento del sistema nos ofrece considerables beneficios. Recuerda que la precisión y el detalle en las configuraciones son clave para el éxito de las aplicaciones basadas en consultas SQL directas en Spring Data. ¡Sigue explorando y perfeccionando tus habilidades!
+
+
+
+# 19-Uso de Proyecciones en Queries Personalizados con Java y SQL
+
+Creado: 11 de octubre de 2025 12:50
+ítem principal: 04-PERSONALIZACION DE QUERIES (https://www.notion.so/04-PERSONALIZACION-DE-QUERIES-281f5b42f77080119c8ee39f9d5d158d?pvs=21)
+
+## **¿Qué son las projections y cómo funcionan en Java?**
+
+Las **projections** son DTOs (Data Transfer Objects) que nos permiten definir una estructura personalizada para recuperar datos específicos de una base de datos. Son especialmente útiles cuando requerimos construir consultas complejas que no se ajustan completamente a los campos de una sola tabla. Imagina que en un proyecto de una Pixería, necesitas detalles de una orden que involucran varias tablas: el identificador de la orden, la fecha, y el total están en "PixaOrder," pero para el nombre del cliente consultarías la tabla "Customer," y para los nombres de las pizzas usarías la tabla "Pixa." Las projections ofrecen una forma eficiente de manejar estos casos.
+
+### **¿Cómo crear una proyección?**
+
+Para crear una proyección en tu aplicación, debes seguir estos pasos:
+
+1. **Crear una interfaz**: Define una interfaz, por ejemplo, `OrderSummary`, que contenga los métodos con los atributos que deseas recuperar en tu consulta.
+
+```java
+public interface OrderSummary {
+    Integer getIdOrder();
+    String getCustomerName();
+    LocalDateTime getOrderDate();
+    Double getOrderTotal();
+    String getPizzaNames();
+}
+
+```
+
+1. **Escribir la consulta SQL**: Redacta un query SQL que recupere los datos necesarios de la base de datos. Usa `JOIN` para unir las tablas relevantes.
+
+```sql
+SELECT 
+	po.id_order AS idOrder, cu.name AS customerName, po.date AS orderDate, 
+    po.total AS orderTotal, group_concat(pi.name) AS pizzaNames
+FROM pizza_order po
+INNER JOIN customer cu ON po.id_customer=cu.id_customer
+INNER JOIN order_item oi ON po.id_order=oi.id_order
+INNER JOIN pizza pi ON oi.id_pizza=pi.id_pizza
+WHERE po.id_order = 1
+GROUP BY po.id_order, cu.name, po.date, po.total;
+
+```
+
+### **¿Cómo usamos la proyección en el código?**
+
+Después de crear la interfaz y la consulta, el siguiente paso es integrarla con el código de la aplicación:
+
+1. **Definir el repositorio**: Crea un método en tu repositorio que retorne el tipo de interfaz `OrderSummary` y anota este método con `@Query`.
+
+```java
+public interface OrderRepository extends ListCrudRepository<OrderEntity, Integer> {
+
+    @Query(
+      value = """
+              SELECT\s
+              	po.id_order AS idOrder, cu.name AS customerName, po.date AS orderDate,\s
+                  po.total AS orderTotal, group_concat(pi.name) AS pizzaNames
+              FROM pizza_order po
+              INNER JOIN customer cu ON po.id_customer=cu.id_customer
+              INNER JOIN order_item oi ON po.id_order=oi.id_order
+              INNER JOIN pizza pi ON oi.id_pizza=pi.id_pizza
+              WHERE po.id_order = :orderId
+              GROUP BY po.id_order, cu.name, po.date, po.total;
+              """,
+      nativeQuery = true
+    )
+    OrderSummary findSummary(@Param("orderId") int orderId);
+}
+
+```
+
+1. **Implementar el servicio**: Añade un método en tu servicio que use el repositorio para obtener el resumen de la orden.
+
+```java
+public OrderSummary getSummary(int orderId) {
+    return this.orderRepository.findSummary(orderId);
+}
+
+```
+
+1. **Exponer en el controlador**: Finalmente, crea un endpoint en el controlador para responder con esta proyección.
+
+```java
+    @GetMapping("/summary/{id}")
+    public ResponseEntity<OrderSummary> getOrderSummary(@PathVariable int id) {
+        return ResponseEntity.ok(this.orderService.getSummary(id));
+    }
+
+```
+
+### **¿Cuál es el beneficio de usar projections?**
+
+Las projections ofrecen varias ventajas:
+
+- **Eficiencia**: Se evita cargar entidades enteras con todas sus relaciones, mejorando la performance.
+- **Claridad**: Hacen que el código sea más legible y facilitan la comprensión de lo que se está recuperando.
+- **Flexibilidad**: Proveen una forma simple de definir y alterar estructuras de datos retornadas sin cambiar la lógica del query.
+
+Así que, ¿a qué esperas para implementar esta técnica? Aprovecha las proyecciones para optimizar tus consultas y hacer tu aplicación más eficiente. ¿Quieres más? Continúa perfeccionando tus habilidades en Java y base de datos, existen demasiadas herramientas y tácticas por descubrir.
+
+
+
+
+# 20-Actualización de Precios de Pizza con Spring Data JPA
+
+Creado: 12 de octubre de 2025 0:53
+ítem principal: 04-PERSONALIZACION DE QUERIES (https://www.notion.so/04-PERSONALIZACION-DE-QUERIES-281f5b42f77080119c8ee39f9d5d158d?pvs=21)
+
+## **¿Cómo modificar datos en una base de datos usando anotaciones?**
+
+¡Bienvenidos al fascinante mundo de las bases de datos en Java! Hoy aprenderás cómo llevar a cabo operaciones como insertar, eliminar o actualizar registros en bases de datos usando anotaciones. Una de las aplicaciones prácticas que exploraremos es actualizar el precio de una pizza. Este proceso se realizará utilizando un Data Transfer Object (DTO) para encapsular el ID de la pizza y su nuevo precio. Aprenderás a aprovechar el poder de Spring Expression Language (SPEL) y a utilizar anotaciones clave como `@Query` y `@Modifying`.
+
+### **¿Qué es un Data Transfer Object (DTO)?**
+
+Un DTO es una clase sencilla cuyo objetivo es transferir datos entre procesos. En nuestro caso, crearemos una clase llamada `UpdatePizzaPriceDTO` que almacenará:
+
+- El ID de la pizza (`int pizzaId`)
+- El nuevo precio (`double newPrice`)
+
+Esta estructura permite manipular datos de manera eficiente mientras se minimiza el acoplamiento entre diferentes partes de un sistema.
+
+### **¿Cómo actualizamos el precio de una pizza?**
+
+Una vez creado el DTO en el paquete `service.dto`, el siguiente paso es definir un método en el repositorio de pizzas que haga la actualización utilizando un SQL nativo:
+
+```java
+public interface PizzaRepository extends ListCrudRepository<PizzaEntity, Integer> {
+    @Query(
+            value = """
+                    UPDATE pizza
+                    SET price= :#{#newPizzaPrice.newPrice}
+                    WHERE id_pizza = :#{#newPizzaPrice.pizzaId}
+                    """,
+            nativeQuery = true
+    )
+    @Modifying
+    void updatePrice(@Param("newPizzaPrice") UpdatePizzaPriceDto newPizzaPrice);
+}
+```
+
+### **¿Qué es el Spring Expression Language (SPEL)?**
+
+SPEL es un poderoso lenguaje que permite acceder a propiedades de objetos complejos de manera sencilla dentro de consultas `@Query`. Esto significa que puedes usar un único parámetro, en este caso, el DTO, y acceder a sus propiedades internas mediante expresiones.
+
+### **¿Cómo integrar este proceso en el servicio y el controlador?**
+
+Dentro del servicio `PizzaService`, se define un método `updatePrice` que acepta un `UpdatePizzaPriceDTO`:
+
+```java
+
+@Transactional
+public void updatePrice(UpdatePizzaPriceDto dto) throws BadRequestException {
+    if (!exists(dto.getPizzaId())) throw new BadRequestException("Error al actualizar, la pizza no se encuentra");
+    this.pizzaRepository.updatePrice(dto);
+}
+
+```
+
+Es crucial resaltar la anotación `@Transactional`, que garantiza que todas las operaciones se realicen dentro de una transacción.
+
+En el controlador se creará un método para manejar peticiones `PUT` que actualicen el precio de la pizza:
+
+```java
+@PutMapping("/price")
+public ResponseEntity<Void> updatePrice(@RequestBody UpdatePizzaPriceDto dto) throws BadRequestException {
+    this.pizzaService.updatePrice(dto);
+    return ResponseEntity.ok().build();
+}
+
+```
+
+Este método verifica primero la existencia de la pizza antes de proceder a actualizar su precio. Así se asegura que solo intentemos modificar registros válidos.
+
+### **¿Cómo resolver el error 500 al ejecutar consultas que modifican datos?**
+
+Al ejecutar aplicaciones que modifican datos en la base de datos, puedes encontrarte con el error 500 si no has configurado correctamente las anotaciones. Este error generalmente ocurre si no se usan las anotaciones `@Modifying` en conjunto con `@Query` para operaciones de actualización.
+
+Finalmente, iniciar tu aplicación con estas configuraciones debería permitirte realizar actualizaciones exitosas, garantizando que los cambios en la base de datos se efectúen correctamente.
+
+En resumen, estas técnicas avanzadas de modificación de datos utilizando anotaciones en Spring te permitirán mantener un código limpio y eficaz, al tiempo que fomentan la robustez y flexibilidad en aplicaciones empresariales. ¡Continúa explorando y aplicando estos conocimientos!
+
+
+
+
+# 21-Propiedades ACID y Spring Data: Uso de @Transactional
+
+Creado: 12 de octubre de 2025 15:24
+ítem principal: 04-PERSONALIZACION DE QUERIES (https://www.notion.so/04-PERSONALIZACION-DE-QUERIES-281f5b42f77080119c8ee39f9d5d158d?pvs=21)
+
+## **¿Qué es ACID y por qué es vital en las transacciones de bases de datos?**
+
+Cuando trabajamos con bases de datos en nuestras aplicaciones, la integridad y confiabilidad de las transacciones son esenciales para asegurar que la información almacenada esté siempre precisa y segura. ACID es un conjunto de cuatro propiedades que toda transacción debe cumplir para garantizar su confiabilidad.
+
+1. **Atomicidad**: Esta propiedad asegura que las transacciones sean "todo o nada". Si un error ocurre durante la ejecución, se realiza un rollback para restaurar el estado inicial.
+2. **Consistencia**: Valida que las transacciones solo realicen operaciones que mantienen la integridad de la información. Esto garantiza que las bases de datos no se corrompan con datos inválidos.
+3. **Aislamiento**: Garantiza que las transacciones se ejecuten de manera independiente, evitando que los datos se mezclen entre operaciones concurrentes.
+4. **Durabilidad**: Asegura que la información persista a lo largo del tiempo, incluso si la base de datos se apaga y se vuelve a encender.
+
+## **¿Cómo implementa Spring Data JPA ACID con @Transactional?**
+
+Spring Data JPA proporciona la anotación `@Transactional` para manejar las propiedades ACID en transacciones que involucran múltiples operaciones de base de datos.
+
+- Al anotar un método con `@Transactional`, se asegura que las transacciones sean atómicas, aisladas, durables y consistentes.
+- Es vital usar `@Transactional` cuando se hacen múltiples llamados a la base de datos desde un mismo método, ya que asegura que las operaciones se ejecuten de manera integral.
+
+Por ejemplo, al actualizar el precio de una pizza:
+
+```java
+@Transactional
+public void updatePrice(UpdatePizzaPriceDto dto) throws BadRequestException {
+    if (!exists(dto.getPizzaId())) {
+			  throw new BadRequestException("Error al actualizar, la pizza no se encuentra");
+	  }
+    this.pizzaRepository.updatePrice(dto);
+    this.sendEmail();
+}
+
+private void sendEmail() {
+    throw new EmailApiException();
+}
+
+```
+
+## **¿Qué sucede al manejar excepciones y rollback con Spring Data JPA?**
+
+En ocasiones, puede que necesitemos manejar excepciones durante una transacción de manera específica, especialmente cuando ciertos errores no deben provocar un rollback.
+
+- **`noRollbackFor`**: Esta propiedad de `@Transactional` nos permite especificar las excepciones para las cuales no deseamos realizar un rollback. Por ejemplo, si un error al enviar un correo no debería revertir una actualización de precio.
+
+```java
+@Transactional(noRollbackFor = EmailApiException.class)
+public void updatePrice(UpdatePizzaPriceDto dto) throws BadRequestException {
+    if (!exists(dto.getPizzaId())) {
+		    throw new BadRequestException("Error al actualizar, la pizza no se encuentra");
+    }
+    this.pizzaRepository.updatePrice(dto);
+    this.sendEmail();
+}
+
+private void sendEmail() {
+    throw new EmailApiException();
+}
+
+```
+
+## **¿Qué papel juega la propagación en @Transactional?**
+
+La propiedad de propagación especifica cómo gestionar las transacciones existentes al llamar a métodos anotados con `@Transactional`.
+
+```java
+@Transactional
+@Tra(noRollbackFor = EmailApiException.class, propagation = Propagation.REQUIRED)
+public void updatePrice(UpdatePizzaPriceDto dto) throws BadRequestException {
+    if (!exists(dto.getPizzaId())) {
+		    throw new BadRequestException("Error al actualizar, la pizza no se encuentra");
+    }
+    this.pizzaRepository.updatePrice(dto);
+    this.sendEmail();
+}
+
+private void sendEmail() {
+    throw new EmailApiException();
+}
+```
+
+- **Required (por defecto)**: Se usará una transacción existente o se creará una nueva si no hay.
+- **Mandatory**: Requiere que ya exista una transacción y lanzará una excepción si no la hay.
+
+La documentación de Spring ofrece detalles extensos sobre otros tipos de propagación, los cuales puedes consultar para decidir cuál es el más adecuado para tus casos específicos.
+
+En resumen, la anotación `@Transactional` en Spring Data JPA no solo asegura que las transacciones adheridas a ACID se ejecuten correctamente, sino que también ofrece flexibilidad al manejar excepciones y la posibilidad de personalizar la propagación de transacciones. Abordar estos aspectos te permite crear aplicaciones más robustas y confiables.
+
+
+
 
 
 
