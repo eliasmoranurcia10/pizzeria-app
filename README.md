@@ -1576,6 +1576,87 @@ Así que, ¿a qué esperas para implementar esta técnica? Aprovecha las proyecc
 
 
 
+# 20-Actualización de Precios de Pizza con Spring Data JPA
+
+Creado: 12 de octubre de 2025 0:53
+ítem principal: 04-PERSONALIZACION DE QUERIES (https://www.notion.so/04-PERSONALIZACION-DE-QUERIES-281f5b42f77080119c8ee39f9d5d158d?pvs=21)
+
+## **¿Cómo modificar datos en una base de datos usando anotaciones?**
+
+¡Bienvenidos al fascinante mundo de las bases de datos en Java! Hoy aprenderás cómo llevar a cabo operaciones como insertar, eliminar o actualizar registros en bases de datos usando anotaciones. Una de las aplicaciones prácticas que exploraremos es actualizar el precio de una pizza. Este proceso se realizará utilizando un Data Transfer Object (DTO) para encapsular el ID de la pizza y su nuevo precio. Aprenderás a aprovechar el poder de Spring Expression Language (SPEL) y a utilizar anotaciones clave como `@Query` y `@Modifying`.
+
+### **¿Qué es un Data Transfer Object (DTO)?**
+
+Un DTO es una clase sencilla cuyo objetivo es transferir datos entre procesos. En nuestro caso, crearemos una clase llamada `UpdatePizzaPriceDTO` que almacenará:
+
+- El ID de la pizza (`int pizzaId`)
+- El nuevo precio (`double newPrice`)
+
+Esta estructura permite manipular datos de manera eficiente mientras se minimiza el acoplamiento entre diferentes partes de un sistema.
+
+### **¿Cómo actualizamos el precio de una pizza?**
+
+Una vez creado el DTO en el paquete `service.dto`, el siguiente paso es definir un método en el repositorio de pizzas que haga la actualización utilizando un SQL nativo:
+
+```java
+public interface PizzaRepository extends ListCrudRepository<PizzaEntity, Integer> {
+    @Query(
+            value = """
+                    UPDATE pizza
+                    SET price= :#{#newPizzaPrice.newPrice}
+                    WHERE id_pizza = :#{#newPizzaPrice.pizzaId}
+                    """,
+            nativeQuery = true
+    )
+    @Modifying
+    void updatePrice(@Param("newPizzaPrice") UpdatePizzaPriceDto newPizzaPrice);
+}
+```
+
+### **¿Qué es el Spring Expression Language (SPEL)?**
+
+SPEL es un poderoso lenguaje que permite acceder a propiedades de objetos complejos de manera sencilla dentro de consultas `@Query`. Esto significa que puedes usar un único parámetro, en este caso, el DTO, y acceder a sus propiedades internas mediante expresiones.
+
+### **¿Cómo integrar este proceso en el servicio y el controlador?**
+
+Dentro del servicio `PizzaService`, se define un método `updatePrice` que acepta un `UpdatePizzaPriceDTO`:
+
+```java
+
+@Transactional
+public void updatePrice(UpdatePizzaPriceDto dto) throws BadRequestException {
+    if (!exists(dto.getPizzaId())) throw new BadRequestException("Error al actualizar, la pizza no se encuentra");
+    this.pizzaRepository.updatePrice(dto);
+}
+
+```
+
+Es crucial resaltar la anotación `@Transactional`, que garantiza que todas las operaciones se realicen dentro de una transacción.
+
+En el controlador se creará un método para manejar peticiones `PUT` que actualicen el precio de la pizza:
+
+```java
+@PutMapping("/price")
+public ResponseEntity<Void> updatePrice(@RequestBody UpdatePizzaPriceDto dto) throws BadRequestException {
+    this.pizzaService.updatePrice(dto);
+    return ResponseEntity.ok().build();
+}
+
+```
+
+Este método verifica primero la existencia de la pizza antes de proceder a actualizar su precio. Así se asegura que solo intentemos modificar registros válidos.
+
+### **¿Cómo resolver el error 500 al ejecutar consultas que modifican datos?**
+
+Al ejecutar aplicaciones que modifican datos en la base de datos, puedes encontrarte con el error 500 si no has configurado correctamente las anotaciones. Este error generalmente ocurre si no se usan las anotaciones `@Modifying` en conjunto con `@Query` para operaciones de actualización.
+
+Finalmente, iniciar tu aplicación con estas configuraciones debería permitirte realizar actualizaciones exitosas, garantizando que los cambios en la base de datos se efectúen correctamente.
+
+En resumen, estas técnicas avanzadas de modificación de datos utilizando anotaciones en Spring te permitirán mantener un código limpio y eficaz, al tiempo que fomentan la robustez y flexibilidad en aplicaciones empresariales. ¡Continúa explorando y aplicando estos conocimientos!
+
+
+
+
 
 
 

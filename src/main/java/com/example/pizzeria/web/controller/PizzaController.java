@@ -2,6 +2,7 @@ package com.example.pizzeria.web.controller;
 
 import com.example.pizzeria.persistence.entity.PizzaEntity;
 import com.example.pizzeria.service.PizzaService;
+import com.example.pizzeria.service.dto.UpdatePizzaPriceDto;
 import lombok.AllArgsConstructor;
 import org.apache.coyote.BadRequestException;
 import org.springframework.data.domain.Page;
@@ -67,6 +68,12 @@ public class PizzaController {
     @PutMapping
     public ResponseEntity<PizzaEntity> update(@RequestBody PizzaEntity pizza) throws BadRequestException {
         return ResponseEntity.ok(this.pizzaService.update(pizza));
+    }
+
+    @PutMapping("/price")
+    public ResponseEntity<Void> updatePrice(@RequestBody UpdatePizzaPriceDto dto) throws BadRequestException {
+        this.pizzaService.updatePrice(dto);
+        return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/{idPizza}")
