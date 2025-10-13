@@ -1748,6 +1748,344 @@ En resumen, la anotación `@Transactional` en Spring Data JPA no solo asegura 
 
 
 
+# 22-Auditoría de Entidades con Spring Data JPA
 
+Creado: 12 de octubre de 2025 18:11
+ítem principal: 05-CARACTERÍSTICAS AVANZADAS (https://www.notion.so/05-CARACTER-STICAS-AVANZADAS-281f5b42f77080b6a0a1efd8652cfb07?pvs=21)
+
+## **¿Qué es la auditoría en bases de datos y por qué es importante?**
+
+La auditoría en bases de datos es fundamental para el control y el manejo eficiente de los datos. Saber quién realizó cambios, qué cambios se hicieron y cuándo se realizaron es crucial para garantizar la integridad y la seguridad de los datos. En el contexto de las bases de datos, la auditoría ayuda a mantener un registro detallado de todas estas operaciones, lo cual puede ser invaluable en situaciones donde se necesite rastrear acciones o corregir errores.
+
+## **¿Cómo implementar la auditoría con Spring Data JPA?**
+
+Spring Data JPA simplifica la implementación de auditorías mediante anotaciones que proporcionan una forma casi transparente de auditar entidades.
+
+### **¿Qué configuraciones iniciales se necesitan?**
+
+Para activar la funcionalidad de auditoría de JPA, es necesario modificar la clase principal del proyecto:
+
+1. Asegúrate de que la clase tiene la anotación `@SpringBootApplication`.
+2. Añade la anotación `@EnableJpaRepositories`.
+3. Incluye `@EnableJpaAuditing` para habilitar la auditoría.
+
+```java
+@SpringBootApplication
+@EnableJpaRepositories
+@EnableJpaAuditing
+public class Application { /*...*/ }
+
+```
+
+### **¿Cómo auditar una entidad específica?**
+
+Para auditar una entidad, como `PixaEntity`, necesitarás:
+
+1. Añadir el `AuditingEntityListener` a la entidad.
+2. Añadir columnas de tipo `LocalDateTime` para las fechas de creación y modificación.
+3. Usar anotaciones de Spring Data como `@CreatedDate` y `@LastModifiedDate` para estas columnas.
+
+```java
+@EntityListeners(AuditingEntityListener.class)
+public class PizzaEntity {
+    // otras columnas...
+
+    @Column(name = "created_date")
+    @CreatedDate
+    private LocalDateTime createdDate;
+
+    @Column(name = "modified_date")
+    @LastModifiedDate
+    private LocalDateTime modifiedDate;
+}
+
+```
+
+### **¿Cómo evitar que las fechas de auditoría se incluyan en la respuesta de JSON?**
+
+Las columnas de auditoría pueden no ser relevantes para el usuario final. Utiliza la anotación `@JsonIgnore` para excluir estas columnas de la respuesta JSON.
+
+```java
+@JsonIgnore
+@CreatedDate
+private LocalDateTime createdDate;
+
+@JsonIgnore
+@LastModifiedDate
+private LocalDateTime modifiedDate;
+
+```
+
+## **¿Cómo evitar la duplicación de columnas de auditoría?**
+
+Para evitar la duplicación de código al tener que añadir estas columnas a múltiples entidades, puedes crear una superclase que defina estos campos de auditoría y luego extenderla desde tus otras entidades.
+
+```java
+@MappedSuperclass
+public class AuditableEntity {
+
+    @Column(name = "created_date")
+    @CreatedDate
+    private LocalDateTime createDate;
+
+    @Column(name = "modified_name")
+    @LastModifiedDate
+    private LocalDateTime modifiedDate;
+}
+
+//...
+@EntityListeners(AuditingEntityListener.class)
+//...
+public class PizzaEntity extends AuditableEntity { /*...*/ }
+
+```
+
+## **¿Qué beneficios ofrece la auditoría de entidades?**
+
+Con una implementación adecuada de auditoría:
+
+- Monitorea y controla cambios en los datos.
+- Mejora la transparencia en el manejo de información.
+- Ayuda a proteger contra el acceso no autorizado o modificaciones indeseadas.
+- Proporciona información valiosa para resolver incidencias futuras.
+
+Con estos pasos y configuraciones, estarás equipado para implementar un sistema robusto de auditoría utilizando Spring Data JPA, reduciendo la complejidad y mejorando la gestión de cambios en tus bases de datos. ¡Sigue explorando y aprendiendo para sacar el máximo provecho de las herramientas de Spring!
+
+
+
+# 23-Auditoría de Entidades con Listeners Personalizados en Spring
+
+Creado: 13 de octubre de 2025 0:26
+ítem principal: 05-CARACTERÍSTICAS AVANZADAS (https://www.notion.so/05-CARACTER-STICAS-AVANZADAS-281f5b42f77080b6a0a1efd8652cfb07?pvs=21)
+
+## **¿Cómo auditar entidades usando un listener personalizado?**
+
+La auditoría de una base de datos es fundamental para mantener la integridad y el control de las modificaciones en nuestras entidades. Hoy vamos a aprender cómo auditar todas las operaciones en nuestra entidad "PizzaEntity" utilizando un listener personalizado. Este mecanismo no solo monitoreará las fechas de creación o modificación, sino también cualquier cambio en sus datos.
+
+### **¿Qué es un listener personalizado?**
+
+Un listener es una clase con métodos que reaccionan a eventos del ciclo de vida de las entidades. Al crear un listener específico para nuestra entidad PizzaEntity, podremos rastrear eventos como la creación, actualización o eliminación de registros.
+
+### **¿Cómo implementar el AuditPizzaListener?**
+
+1. **Crear el paquete de auditoría**: Comienza creando un nuevo paquete llamado `audit` dentro de la carpeta de persistencia, donde podrás agrupar todos los listeners necesarios.
+2. **Definir la clase AuditPizzaListener**: Esta clase gestionará los eventos auditables. Implementa métodos específicos utilizando anotaciones como `@PostPersist`, `@PostUpdate`, y `@PreRemove`.
+3. **Uso de anotaciones para métodos**:
+    - **@PostPersist y @PostUpdate**: Capturan eventos cuando una entidad se guarda o actualiza.
+
+        ```java
+        @PostPersist
+        @PostUpdate
+        public void onPostPersist(PizzaEntity entity) {
+            System.out.println("POST PERSIST OR UPDATE");
+            if (this.currentValue.toString() != null) {
+                System.out.println("OLD VALUE: " + this.currentValue.toString());
+            }
+            System.out.println("NEW VALUE: " + entity.toString());
+        }
+        
+        ```
+
+    - **@PreRemove**: Se ejecuta antes de eliminar un registro.
+
+        ```java
+        @PreRemove
+        public void onPreDelete(PizzaEntity entity) {
+            System.out.println(entity.toString());
+        }
+        
+        ```
+
+4. **Implementar `toString` para PizzaEntity**: Asegúrate de que la clase PizzaEntity tenga un método `toString` que incluya todos los datos relevantes para facilitar la auditoría visual de los datos anteriores y actuales.
+
+### **¿Cómo gestionar el post load con clonación?**
+
+El método postLoad permite auditar los valores antes de una modificación cargando el estado actual del entity. Para esto:
+
+- Utiliza `SerializationUtils` para clonar la entidad y evitar sobreescritura en memoria.
+
+    ```java
+    private PizzaEntity currentValue;
+    
+    @PostLoad
+    public void postLoad(PizzaEntity entity) {
+        System.out.println("POST LOAD");
+        this.currentValue = SerializationUtils.clone(entity);
+    }
+    
+    ```
+
+
+### **¿Qué sucede al insertar o modificar datos?**
+
+Cuando modificamos un campo, al realizar una petición, notarás en la consola cómo el sistema imprime tanto el estado anterior como el nuevo:
+
+- Vemos la ejecución en el orden correcto: `postLoad`, actualiza, y finalmente `postPersist`.
+- Ejemplo de valores auditados:
+
+    ```
+    "oldValue: motherboard, newValue: holymotherherd"
+    
+    ```
+
+
+### **Recomendaciones finales para la auditoría**
+
+Es importante siempre confirmar cambios verificando que el ID sea consistente, especialmente en operaciones de actualización. Los resultados obtenidos pueden enviarse a bases de datos para registros históricos o incluso a archivos de log.
+
+Finalmente, recuerda que este tipo de auditoría es efectiva cuando usas métodos del ciclo de vida de los Spring Data Repositories como `save`. Para queries nativos, estos procesos no serán transparentes.
+
+Continúa explorando formas de mejorar la gestión de tus entidades con Spring Data JPA, y no olvides acompañarme en la próxima clase para descubrir cómo ejecutar procedimientos almacenados usando esta potente herramienta. ¡Sigue aprendiendo y ampliando tus habilidades!
+
+
+
+
+# 24-Ejecución de Store Procedures en Spring Data
+
+Creado: 13 de octubre de 2025 11:32
+ítem principal: 05-CARACTERÍSTICAS AVANZADAS (https://www.notion.so/05-CARACTER-STICAS-AVANZADAS-281f5b42f77080b6a0a1efd8652cfb07?pvs=21)
+
+## **¿Cómo utilizar store procedures en Spring Data?**
+
+En el desarrollo de aplicaciones, recurrir a los **store procedures** es una práctica común para manejar operaciones complejas en bases de datos, garantizando mantenimiento y eficiencia. Spring Data, un proyecto del ecosistema Spring, nos facilita esta tarea a través de la anotación `@Procedure`, permitiendo declarar y ejecutar store procedures de una manera sencilla. En esta guía aprenderás a implementar funciones que añaden valor a tus aplicaciones mediante un ejemplo práctico.
+
+### **¿Qué es un store procedure y cómo lo manejamos?**
+
+Un **store procedure** es un bloque de código almacenado y reutilizable que permite realizar operaciones complejas en la base de datos, agrupando múltiples instrucciones SQL. Esto puede incluir selecciones, inserciones, o control de transacciones, incrementando tanto la eficiencia como la seguridad de las operaciones. En nuestro caso, utilizamos un store procedure que brinda una promoción del 20% de descuento al ordenar una pizza aleatoria.
+
+### **¿Cómo implementar un store procedure en Spring Data?**
+
+**Paso 1: Definir el store procedure en la base de datos**
+
+En este ejemplo, comenzamos definiendo nuestro store procedure en MySQL, nombrando el procedimiento take_random_pizza_order. Este procedimiento:
+
+- Recibe como parámetros: la identificación del usuario y el método de envío.
+- Gira dentro de una transacción para controlar errores y asegurar el rollback en casos de fallo.
+- Selecciona una pizza de manera aleatoria, calcula el precio con un 20% de descuento y registra la orden en la base de datos.
+
+**Código del store procedure**
+
+```sql
+DROP procedure IF EXISTS `take_random_pizza_order`;
+
+DELIMITER $$
+
+CREATE PROCEDURE `take_random_pizza_order`(
+																					IN id_customer VARCHAR(15),
+																					IN method CHAR(1), 
+                                          OUT order_taken BOOL
+                                          )
+BEGIN 
+	DECLARE id_random_pizza INT;
+    DECLARE price_random_pizza DECIMAL(5,2);
+    DECLARE price_with_discount DECIMAL(5,2);
+    
+    DECLARE WITH_ERRORS BOOL DEFAULT FALSE;
+    DECLARE CONTINUE HANDLER FOR SQLEXCEPTION
+    BEGIN
+		SET WITH_ERRORS = TRUE;
+    END;
+    
+    SELECT id_pizza, price
+    INTO id_random_pizza, price_random_pizza
+    FROM pizza
+    WHERE available = 1
+    ORDER BY RAND()
+    LIMIT 1;
+    
+    SET price_with_discount = price_random_pizza - (price_random_pizza * 0.20);
+    
+    START TRANSACTION;
+    INSERT INTO pizza_order (id_customer, date, total, method, additional_notes)
+    VALUES (id_customer, SYSDATE(), price_with_discount, method, '20% OFF PIZZA RANDOM');
+    
+    INSERT INTO order_item (id_item, id_order, id_pizza, quantity, price)
+    VALUES (1, LAST_INSERT_ID(), id_random_pizza, 1, price_random_pizza);
+    
+    IF WITH_ERRORS THEN
+		SET order_taken = FALSE;
+        ROLLBACK;
+    ELSE
+		SET order_taken = TRUE;
+        COMMIT;
+	END IF;
+    
+    SELECT order_taken;
+    
+END$$
+
+DELIMITER ;
+
+```
+
+**Paso 2: Implementación en el repositorio de Spring Data**
+
+Declara el store procedure en tu repositorio utilizando la anotación `@Procedure`. Define los parámetros de entrada y el parámetro de salida que recibirá su valor booleano.
+
+**Código en Java en el repositorio**
+
+```java
+public interface OrderRepository extends ListCrudRepository<OrderEntity, Integer> {
+   
+    @Procedure(value = "take_random_pizza_order", outputParameterName = "order_taken")
+    boolean saveRandomOrder(
+		    @Param("id_customer") String idCustomer,
+		    @Param("method") String method
+    );
+}
+
+```
+
+### **¿Cómo crear un servicio y controlador que utilicen el store procedure?**
+
+**Paso 3: Crear el servicio**
+
+Utiliza la anotación `@Transactional` para manejar de manera adecuada las transacciones del store procedure en tu método `saveRandomOrder`.
+
+**Código del servicio**
+
+```java
+@Service
+@AllArgsConstructor
+public class OrderService {
+
+    @Transactional
+    public boolean saveRandomOrder(RandomOrderDto randomOrderDto) {
+        return this.orderRepository.saveRandomOrder(randomOrderDto.getIdCustomer(), randomOrderDto.getMethod());
+    }
+}
+
+```
+
+**Paso 4: Configurar el controlador**
+
+Desarrolla el controlador para gestionar las peticiones HTTP. Esto permitirá recibir peticiones POST y ejecutar el store procedure en consecuencia.
+
+**Código del controlador**
+
+```java
+@Service
+@AllArgsConstructor
+public class OrderService {
+
+    private final OrderRepository orderRepository;
+
+    @Transactional
+    public boolean saveRandomOrder(RandomOrderDto randomOrderDto) {
+        return this.orderRepository.saveRandomOrder(
+		        randomOrderDto.getIdCustomer(), 
+		        randomOrderDto.getMethod()
+        );
+    }
+}
+```
+
+### **¿Qué aspectos debemos verificar antes de ejecutar el Store Procedure?**
+
+- Asegúrate de que el store procedure esté correctamente definido en tu base de datos antes de su ejecución.
+- Utiliza herramientas como Postman para enviar las solicitudes post y verificar su correcto funcionamiento.
+- Con la anotación `@Transactional`, gestiona el compromiso de los datos evitando inconsistencias.
+
+Con estos pasos, estarás listo para integrar store procedures eficazmente en tus aplicaciones desarrolladas con Spring Data. ¡Ah! Y dale la bienvenida al 20% de descuento para tus clientes más aventureros.
 
 
