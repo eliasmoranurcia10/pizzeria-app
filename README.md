@@ -1773,7 +1773,7 @@ Para activar la funcionalidad de auditoría de JPA, es necesario modificar la cl
 @SpringBootApplication
 @EnableJpaRepositories
 @EnableJpaAuditing
-public class Application { ... }
+public class Application { /*...*/ }
 
 ```
 
@@ -1833,10 +1833,10 @@ public class AuditableEntity {
     private LocalDateTime modifiedDate;
 }
 
-...
+//...
 @EntityListeners(AuditingEntityListener.class)
-...
-public class PizzaEntity extends AuditableEntity { ... }
+//...
+public class PizzaEntity extends AuditableEntity { /*...*/ }
 
 ```
 
@@ -1940,13 +1940,152 @@ Continúa explorando formas de mejorar la gestión de tus entidades con Spring D
 
 
 
+# 24-Ejecución de Store Procedures en Spring Data
 
+Creado: 13 de octubre de 2025 11:32
+ítem principal: 05-CARACTERÍSTICAS AVANZADAS (https://www.notion.so/05-CARACTER-STICAS-AVANZADAS-281f5b42f77080b6a0a1efd8652cfb07?pvs=21)
 
+## **¿Cómo utilizar store procedures en Spring Data?**
 
+En el desarrollo de aplicaciones, recurrir a los **store procedures** es una práctica común para manejar operaciones complejas en bases de datos, garantizando mantenimiento y eficiencia. Spring Data, un proyecto del ecosistema Spring, nos facilita esta tarea a través de la anotación `@Procedure`, permitiendo declarar y ejecutar store procedures de una manera sencilla. En esta guía aprenderás a implementar funciones que añaden valor a tus aplicaciones mediante un ejemplo práctico.
 
+### **¿Qué es un store procedure y cómo lo manejamos?**
 
+Un **store procedure** es un bloque de código almacenado y reutilizable que permite realizar operaciones complejas en la base de datos, agrupando múltiples instrucciones SQL. Esto puede incluir selecciones, inserciones, o control de transacciones, incrementando tanto la eficiencia como la seguridad de las operaciones. En nuestro caso, utilizamos un store procedure que brinda una promoción del 20% de descuento al ordenar una pizza aleatoria.
 
+### **¿Cómo implementar un store procedure en Spring Data?**
 
+**Paso 1: Definir el store procedure en la base de datos**
 
+En este ejemplo, comenzamos definiendo nuestro store procedure en MySQL, nombrando el procedimiento take_random_pizza_order. Este procedimiento:
+
+- Recibe como parámetros: la identificación del usuario y el método de envío.
+- Gira dentro de una transacción para controlar errores y asegurar el rollback en casos de fallo.
+- Selecciona una pizza de manera aleatoria, calcula el precio con un 20% de descuento y registra la orden en la base de datos.
+
+**Código del store procedure**
+
+```sql
+DROP procedure IF EXISTS `take_random_pizza_order`;
+
+DELIMITER $$
+
+CREATE PROCEDURE `take_random_pizza_order`(
+																					IN id_customer VARCHAR(15),
+																					IN method CHAR(1), 
+                                          OUT order_taken BOOL
+                                          )
+BEGIN 
+	DECLARE id_random_pizza INT;
+    DECLARE price_random_pizza DECIMAL(5,2);
+    DECLARE price_with_discount DECIMAL(5,2);
+    
+    DECLARE WITH_ERRORS BOOL DEFAULT FALSE;
+    DECLARE CONTINUE HANDLER FOR SQLEXCEPTION
+    BEGIN
+		SET WITH_ERRORS = TRUE;
+    END;
+    
+    SELECT id_pizza, price
+    INTO id_random_pizza, price_random_pizza
+    FROM pizza
+    WHERE available = 1
+    ORDER BY RAND()
+    LIMIT 1;
+    
+    SET price_with_discount = price_random_pizza - (price_random_pizza * 0.20);
+    
+    START TRANSACTION;
+    INSERT INTO pizza_order (id_customer, date, total, method, additional_notes)
+    VALUES (id_customer, SYSDATE(), price_with_discount, method, '20% OFF PIZZA RANDOM');
+    
+    INSERT INTO order_item (id_item, id_order, id_pizza, quantity, price)
+    VALUES (1, LAST_INSERT_ID(), id_random_pizza, 1, price_random_pizza);
+    
+    IF WITH_ERRORS THEN
+		SET order_taken = FALSE;
+        ROLLBACK;
+    ELSE
+		SET order_taken = TRUE;
+        COMMIT;
+	END IF;
+    
+    SELECT order_taken;
+    
+END$$
+
+DELIMITER ;
+
+```
+
+**Paso 2: Implementación en el repositorio de Spring Data**
+
+Declara el store procedure en tu repositorio utilizando la anotación `@Procedure`. Define los parámetros de entrada y el parámetro de salida que recibirá su valor booleano.
+
+**Código en Java en el repositorio**
+
+```java
+public interface OrderRepository extends ListCrudRepository<OrderEntity, Integer> {
+   
+    @Procedure(value = "take_random_pizza_order", outputParameterName = "order_taken")
+    boolean saveRandomOrder(
+		    @Param("id_customer") String idCustomer,
+		    @Param("method") String method
+    );
+}
+
+```
+
+### **¿Cómo crear un servicio y controlador que utilicen el store procedure?**
+
+**Paso 3: Crear el servicio**
+
+Utiliza la anotación `@Transactional` para manejar de manera adecuada las transacciones del store procedure en tu método `saveRandomOrder`.
+
+**Código del servicio**
+
+```java
+@Service
+@AllArgsConstructor
+public class OrderService {
+
+    @Transactional
+    public boolean saveRandomOrder(RandomOrderDto randomOrderDto) {
+        return this.orderRepository.saveRandomOrder(randomOrderDto.getIdCustomer(), randomOrderDto.getMethod());
+    }
+}
+
+```
+
+**Paso 4: Configurar el controlador**
+
+Desarrolla el controlador para gestionar las peticiones HTTP. Esto permitirá recibir peticiones POST y ejecutar el store procedure en consecuencia.
+
+**Código del controlador**
+
+```java
+@Service
+@AllArgsConstructor
+public class OrderService {
+
+    private final OrderRepository orderRepository;
+
+    @Transactional
+    public boolean saveRandomOrder(RandomOrderDto randomOrderDto) {
+        return this.orderRepository.saveRandomOrder(
+		        randomOrderDto.getIdCustomer(), 
+		        randomOrderDto.getMethod()
+        );
+    }
+}
+```
+
+### **¿Qué aspectos debemos verificar antes de ejecutar el Store Procedure?**
+
+- Asegúrate de que el store procedure esté correctamente definido en tu base de datos antes de su ejecución.
+- Utiliza herramientas como Postman para enviar las solicitudes post y verificar su correcto funcionamiento.
+- Con la anotación `@Transactional`, gestiona el compromiso de los datos evitando inconsistencias.
+
+Con estos pasos, estarás listo para integrar store procedures eficazmente en tus aplicaciones desarrolladas con Spring Data. ¡Ah! Y dale la bienvenida al 20% de descuento para tus clientes más aventureros.
 
 
