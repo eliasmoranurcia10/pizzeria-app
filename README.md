@@ -1853,6 +1853,100 @@ Con estos pasos y configuraciones, estarás equipado para implementar un sistema
 
 
 
+# 23-Auditoría de Entidades con Listeners Personalizados en Spring
+
+Creado: 13 de octubre de 2025 0:26
+ítem principal: 05-CARACTERÍSTICAS AVANZADAS (https://www.notion.so/05-CARACTER-STICAS-AVANZADAS-281f5b42f77080b6a0a1efd8652cfb07?pvs=21)
+
+## **¿Cómo auditar entidades usando un listener personalizado?**
+
+La auditoría de una base de datos es fundamental para mantener la integridad y el control de las modificaciones en nuestras entidades. Hoy vamos a aprender cómo auditar todas las operaciones en nuestra entidad "PizzaEntity" utilizando un listener personalizado. Este mecanismo no solo monitoreará las fechas de creación o modificación, sino también cualquier cambio en sus datos.
+
+### **¿Qué es un listener personalizado?**
+
+Un listener es una clase con métodos que reaccionan a eventos del ciclo de vida de las entidades. Al crear un listener específico para nuestra entidad PizzaEntity, podremos rastrear eventos como la creación, actualización o eliminación de registros.
+
+### **¿Cómo implementar el AuditPizzaListener?**
+
+1. **Crear el paquete de auditoría**: Comienza creando un nuevo paquete llamado `audit` dentro de la carpeta de persistencia, donde podrás agrupar todos los listeners necesarios.
+2. **Definir la clase AuditPizzaListener**: Esta clase gestionará los eventos auditables. Implementa métodos específicos utilizando anotaciones como `@PostPersist`, `@PostUpdate`, y `@PreRemove`.
+3. **Uso de anotaciones para métodos**:
+    - **@PostPersist y @PostUpdate**: Capturan eventos cuando una entidad se guarda o actualiza.
+
+        ```java
+        @PostPersist
+        @PostUpdate
+        public void onPostPersist(PizzaEntity entity) {
+            System.out.println("POST PERSIST OR UPDATE");
+            if (this.currentValue.toString() != null) {
+                System.out.println("OLD VALUE: " + this.currentValue.toString());
+            }
+            System.out.println("NEW VALUE: " + entity.toString());
+        }
+        
+        ```
+
+    - **@PreRemove**: Se ejecuta antes de eliminar un registro.
+
+        ```java
+        @PreRemove
+        public void onPreDelete(PizzaEntity entity) {
+            System.out.println(entity.toString());
+        }
+        
+        ```
+
+4. **Implementar `toString` para PizzaEntity**: Asegúrate de que la clase PizzaEntity tenga un método `toString` que incluya todos los datos relevantes para facilitar la auditoría visual de los datos anteriores y actuales.
+
+### **¿Cómo gestionar el post load con clonación?**
+
+El método postLoad permite auditar los valores antes de una modificación cargando el estado actual del entity. Para esto:
+
+- Utiliza `SerializationUtils` para clonar la entidad y evitar sobreescritura en memoria.
+
+    ```java
+    private PizzaEntity currentValue;
+    
+    @PostLoad
+    public void postLoad(PizzaEntity entity) {
+        System.out.println("POST LOAD");
+        this.currentValue = SerializationUtils.clone(entity);
+    }
+    
+    ```
+
+
+### **¿Qué sucede al insertar o modificar datos?**
+
+Cuando modificamos un campo, al realizar una petición, notarás en la consola cómo el sistema imprime tanto el estado anterior como el nuevo:
+
+- Vemos la ejecución en el orden correcto: `postLoad`, actualiza, y finalmente `postPersist`.
+- Ejemplo de valores auditados:
+
+    ```
+    "oldValue: motherboard, newValue: holymotherherd"
+    
+    ```
+
+
+### **Recomendaciones finales para la auditoría**
+
+Es importante siempre confirmar cambios verificando que el ID sea consistente, especialmente en operaciones de actualización. Los resultados obtenidos pueden enviarse a bases de datos para registros históricos o incluso a archivos de log.
+
+Finalmente, recuerda que este tipo de auditoría es efectiva cuando usas métodos del ciclo de vida de los Spring Data Repositories como `save`. Para queries nativos, estos procesos no serán transparentes.
+
+Continúa explorando formas de mejorar la gestión de tus entidades con Spring Data JPA, y no olvides acompañarme en la próxima clase para descubrir cómo ejecutar procedimientos almacenados usando esta potente herramienta. ¡Sigue aprendiendo y ampliando tus habilidades!
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -1,5 +1,6 @@
 package com.example.pizzeria.persistence.entity;
 
+import com.example.pizzeria.persistence.audit.AuditableEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
