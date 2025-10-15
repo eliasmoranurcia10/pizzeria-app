@@ -130,3 +130,50 @@ Con esta preparación, estás listo para profundizar en la integración de Sprin
 
 
 
+# 04-Autenticación Básica con Spring Security por Defecto
+
+Creado: 15 de octubre de 2025 12:11
+ítem principal: 01-INTRODUCCIÓN (https://www.notion.so/01-INTRODUCCI-N-28cf5b42f77080a7827ad8e792773abc?pvs=21)
+
+## **¿Qué es Spring Security y cómo funciona su autenticación básica?**
+
+Spring Security es una poderosa herramienta que agrega una capa de seguridad a nuestras aplicaciones, protegiéndolas contra accesos no autorizados. Al agregar la dependencia de Spring Security a tu proyecto, se habilita una configuración de seguridad por defecto. Esta configuración genera automáticamente un usuario y una contraseña genérica que puedes utilizar para acceder a los servicios de tu aplicación de forma segura durante el desarrollo.
+
+### **¿Cómo se utiliza la autenticación básica con Spring Security?**
+
+Por defecto, Spring Security utiliza Basic Authentication. Este tipo de autenticación requiere incluir en el encabezado de cada petición HTTP el término `BASIC`, seguido de un texto codificado en Base64 que combina el usuario y la contraseña separados por dos puntos. Te presentamos el paso a paso para entender el flujo de autenticación con Spring Security:
+
+1. **Realización de una petición GET sin autorización**: Si realizas una petición GET a un recurso que requiere autenticación sin el encabezado adecuado, obtendrás una respuesta con estado 401, indicando falta de autorización.
+2. **Incorporación del encabezado Authorization**: Si añades el encabezado Authorization con el formato `BASIC` y las credenciales correctas, recibirás una respuesta positiva con estado 200, proporcionando acceso al recurso deseado, como por ejemplo una lista de pizzas en este caso de estudio.
+
+### **¿Cómo gestionar credenciales y debugging en Spring Security?**
+
+Cada vez que inicias tu aplicación, Spring Security genera una nueva contraseña por defecto, facilitando el proceso de desarrollo gracias a su seguridad dinámica. Verás esta contraseña en tu consola; puedes copiarla para realizar tus pruebas de autenticación en herramientas como Postman:
+
+```
+Por defecto, el usuario es `USER` y la contraseña es la generada aleatoriamente que aparece en la consola.
+
+```
+
+Además, puedes mejorar el debugging de tu aplicación ajustando los niveles de logging para obtener información detallada sobre cómo maneja Spring Security las peticiones. Puedes hacerlo agregando la siguiente línea a tu configuración:
+
+```
+logging.level.org.springframework.security.web.*=DEBUG
+
+```
+
+### **¿Cómo protege tu aplicación el Spring Security filter chain?**
+
+Spring Security incluye una cadena de filtros, conocida como `Spring Security filter chain`, que procesa cada petición de forma escalonada y en cascada. Estos filtros son los responsables de:
+
+- Autenticar cada solicitud
+- Autorizar el acceso a los recursos
+- Proteger tu aplicación contra diferentes tipos de ataques y vulnerabilidades
+
+Es esencial comprender cómo se configuran y funcionan estos filtros ya que son la base de la seguridad en Spring.
+
+Invierte tiempo explorando y experimentando con estas configuraciones. Esto te proporcionará una sólida base en seguridad para el desarrollo de aplicaciones con Spring. Y no olvides, conocer a fondo el funcionamiento de los sistemas de seguridad te otorgará confianza y competencia en tus proyectos futuros. ¡Sigue aprendiendo y mejorando tus habilidades!
+
+
+
+
