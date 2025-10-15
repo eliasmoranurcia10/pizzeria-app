@@ -118,7 +118,7 @@ implementation 'org.springframework.boot:spring-boot-starter-security'
 
 ### **¿Cómo verifica los cambios en la aplicación con Spring Security?**
 
-Una vez que la aplicación se reinicie, utiliza Postman para enviar peticiones a la API. Al integrar Spring Security, todas las solicitudes serán automáticamente interceptadas por el `Spring Security Filter Chain`. Este cambio se reflejará en el resultado devuelto, el cual mostrará un error 401 si la petición no está autenticada correctamente.
+Una vez que la aplicación se reinicie, utiliza Postman para enviar peticiones a la API. Al integrar Spring Security, todas las solicitudes serán automáticamente interceptadas por el  `Spring Security Filter Chain`. Este cambio se reflejará en el resultado devuelto, el cual mostrará un error 401 si la petición no está autenticada correctamente.
 
 ### **Consejos y recomendaciones prácticas**
 
@@ -170,9 +170,117 @@ Spring Security incluye una cadena de filtros, conocida como `Spring Security f
 - Autorizar el acceso a los recursos
 - Proteger tu aplicación contra diferentes tipos de ataques y vulnerabilidades
 
-Es esencial comprender cómo se configuran y funcionan estos filtros ya que son la base de la seguridad en Spring.
+Es esencial comprender cómo se configuran y funcionan estos filtros, ya que son la base de la seguridad en Spring.
 
 Invierte tiempo explorando y experimentando con estas configuraciones. Esto te proporcionará una sólida base en seguridad para el desarrollo de aplicaciones con Spring. Y no olvides, conocer a fondo el funcionamiento de los sistemas de seguridad te otorgará confianza y competencia en tus proyectos futuros. ¡Sigue aprendiendo y mejorando tus habilidades!
+
+
+
+# 05-Configuración de Seguridad con Spring Security y Basic Authentication
+
+Creado: 15 de octubre de 2025 17:16
+ítem principal: 01-INTRODUCCIÓN (https://www.notion.so/01-INTRODUCCI-N-28cf5b42f77080a7827ad8e792773abc?pvs=21)
+
+## **¿Cómo podemos configurar un Security Filter Chain en Spring?**
+
+Crear un Security Filter Chain en Spring nos permite manejar la seguridad de nuestras aplicaciones, definiendo cómo se autenticará y autorizará cada petición HTTP. Primero, debemos crear un paquete específico para la configuración de seguridad y una clase donde implementaremos los filtros necesarios.
+
+### **¿Cómo creamos la configuración inicial de seguridad?**
+
+1. **Crear un paquete nuevo**: Dentro de la capa web del proyecto, crea un paquete llamado `Config`.
+2. **Anotar la clase con @Configuration**: Esto permite que Spring gestione e inyecte automáticamente este bean dentro de la aplicación.
+3. **Definir el método Security Filter Chain**: Crea un método público que retorne un `SecurityFilterChain` y reciba un `HttpSecurity` como parámetro.
+
+```java
+@Configuration
+public class SecurityConfig {
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+			// ...
+    }
+}
+
+```
+
+### **¿Cómo permitimos o restringimos peticiones HTTP?**
+
+Definir las reglas para autorizar peticiones es crucial para proteger una aplicación. Inicialmente, podemos permitir todas las peticiones, y posteriormente, aplicar seguridad ajustando estas configuraciones.
+
+- **Permitir todas las peticiones**: Esto esencialmente elimina las capas de autenticación.
+
+    ```java
+    @Configuration
+    public class SecurityConfig {
+    
+        @Bean
+        public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+            http
+                    .authorizeHttpRequests( auth -> auth
+                            .anyRequest().permitAll()
+                    );
+            return http.build();
+        }
+    }
+    
+    ```
+
+- **Requerir autenticación básica para todas las peticiones**: Prioriza la seguridad solicitando autenticación en cada acceso.
+
+    ```java
+    @Configuration
+    public class SecurityConfig {
+    
+        @Bean
+        public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+            http
+                    .authorizeHttpRequests( auth -> auth
+                            .anyRequest().authenticated()
+                    )
+                    .httpBasic(Customizer.withDefaults());
+            return http.build();
+        }
+    }
+    
+    ```
+
+
+### **¿Cómo validamos la configuración con Postman?**
+
+Con la configuración inicial realizada, verifica el comportamiento utilizando herramientas como Postman:
+
+1. **Probar sin autorización**: Elimina el encabezado de autorización y envía la petición. Si logras recibir una respuesta, significa que la seguridad está desactivada.
+2. **Activar Basic Authentication**: Configura la autenticación básica con el usuario y contraseña generados por Spring. Observa que las peticiones ahora requieren credenciales válidas.
+
+En el código, aseguramos que las peticiones usen autenticación básica y verificamos el funcionamiento del filtro correspondiente:
+
+```java
+@Configuration
+    public class SecurityConfig {
+    
+        @Bean
+        public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+            http
+                    .authorizeHttpRequests( auth -> auth
+                            .anyRequest().authenticated()
+                    )
+                    .httpBasic(Customizer.withDefaults());
+            return http.build();
+        }
+    }
+
+```
+
+Al lanzar la aplicación, el filtro `BasicAuthenticationFilter` gestionará las autenticaciones. Si el header de la autorización no está presente o es incorrecto, la petición será denegada.
+
+### **¿Qué debemos tener en cuenta al implementar seguridad en Spring?**
+
+- **Gestión de usuarios y contraseñas**: Usar `User` como el usuario por defecto puede ser seguro para desarrollo, pero en producción es crucial personalizar estas credenciales.
+- **Desactivar filtros innecesarios**: Spring incluye múltiples filtros por defecto. Solo mantén los relevantes para tu caso y desactiva el resto explícitamente.
+- **Revisar la documentación de Spring Security**: Spring es una herramienta poderosa, y conocer sus capacidades nos ayudará a adaptar más funcionalidades.
+
+Este enfoque fortalece tu aplicación contra accesos no autorizados e intenta hacerlo accesible a usuarios válidos. Continúa explorando y ampliando tus habilidades en seguridad con Spring para dominar estos conceptos.
+
 
 
 
