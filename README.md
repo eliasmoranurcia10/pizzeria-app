@@ -283,5 +283,65 @@ Este enfoque fortalece tu aplicación contra accesos no autorizados e intenta ha
 
 
 
+# 06-Funcionamiento del Basic Authentication Filter en Spring Security
+
+Creado: 15 de octubre de 2025 23:34
+ítem principal: 02-CONFIGURACIÓN DE  SEGURIDAD (https://www.notion.so/02-CONFIGURACI-N-DE-SEGURIDAD-28cf5b42f770805d83e6d201c527381a?pvs=21)
+
+## **¿Cómo funciona el Basic Authentication Filter en Spring Security?**
+
+El proceso de autenticación en Spring Security es una pieza fundamental para garantizar la seguridad de nuestras aplicaciones. Al delegar este proceso a un filtro en el Security Filter Chain, específicamente el Basic Authentication Filter, se asegura de que las credenciales del usuario sean correctas antes de otorgar acceso a recursos protegidos. Pero, ¿cómo funciona realmente este filtro?
+
+### **¿Qué sucede cuando se recibiere una petición?**
+
+- **Interceptación de la petición:** La cadena de filtros de Spring Security captura la petición y la pasa por todos los filtros de seguridad configurados.
+- **Verificación de credenciales:** Al llegar al Basic Authentication Filter, se verifica si el usuario y la contraseña enviados son correctos.
+
+```plain text
+Authentication Request
+➜ [ Security Filter A ] ➜ [ Basic Authentication Filter ] ➜ [ ... ] ➜ [ Security Filter N ]
+➜ [ Authentication Manager ]
+➜ [ Authentication Provider (Default: DaoAuthenticationProvider) ]
+➜ [ User Details Service (Default: InMemoryUserDetailsManager) ]
+➜ Authentication Response
+```
+
+### **¿Qué rol tiene el Authentication Manager?**
+
+El Authentication Manager actúa como un coordinador en el proceso de autenticación, decidiendo cómo debe autenticar al usuario:
+
+- **Selecciona el método de autenticación:** Determina si la autenticación será mediante usuario y contraseña, Auth0, LDAP, etc.
+- **Interacción con Authentication Provider:** En el caso del Basic Authentication Filter, usa el DAO Authentication Provider para verificar las credenciales de usuario y contraseña.
+
+### **¿Cómo es el flujo con el DAO Authentication Provider?**
+
+El flujo continúa con el DAO Authentication Provider, el cual:
+
+- **Consulta al User Detail Service:** Como se utilizan usuarios y contraseñas en memoria por Spring, emplea el In-Memory User Detail Service.
+- **Verificación de contraseña:** Compara la contraseña proporcionada con la almacenada para el usuario solicitado.
+
+### **¿Cómo realizar un debug en el Basic Authentication Filter?**
+
+Para comprender mejor este proceso, se puede hacer un debug en el código de Spring. La clave está en el método `doFilterInternal` del Basic Authentication Filter, donde:
+
+1. **Establecer puntos de interés:** Colocar puntos de control en líneas clave para seguir el flujo de autenticación.
+2. **Lanzar la aplicación en modo debug:** Permitir que la aplicación se detenga en estos puntos para examinar el estado del proceso.
+3. **Observar el paso a través de las líneas:** Verificar cómo se gestiona el `UserPasswordAuthenticationToken` y cómo interactúa con el `AuthenticationManager`.
+
+### **¿Cuál es el papel del Abstract User Details Authentication Provider?**
+
+El Abstract User Details Authentication Provider establece algunas validaciones preliminares importantes:
+
+- **Carga del usuario:** A través del método `retrieveUser`, se recupera el usuario desde un In-MemoryUserDetailsService.
+- **Validación del usuario y la contraseña:** Desde la línea 147, se asegura de que la contraseña proporcionada coincida con la almacenada.
+
+### **¿Qué resultados se obtienen tras la verificación?**
+
+- **Autenticación exitosa:** Si las credenciales son correctas, el usuario se carga en el contexto de seguridad.
+- **Respuesta a la petición:** Finalmente, el sistema responde con un status 200 confirmando que el proceso ha sido exitoso.
+
+Como desarrolladores, es esencial ir más allá del uso superficial de frameworks como Spring Security. Comprender cómo funciona internamente, especialmente la autenticación básica, proporciona una visión más clara y nos capacita para gestionar mejor la seguridad en nuestras aplicaciones. Aunque no es necesario aprender todo sobre el funcionamiento interno de Spring Security, esta es una oportunidad para apreciar el valor de entender qué sucede detrás de escena, ayudándonos a ser desarrolladores más informados y competentes. ¡Continúa aprendiendo y explorando! Te espero en la próxima clase para hablar sobre la protección CSRF en Spring.
+
+
 
 
