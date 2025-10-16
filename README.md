@@ -343,5 +343,77 @@ El Abstract User Details Authentication Provider establece algunas validaciones 
 Como desarrolladores, es esencial ir más allá del uso superficial de frameworks como Spring Security. Comprender cómo funciona internamente, especialmente la autenticación básica, proporciona una visión más clara y nos capacita para gestionar mejor la seguridad en nuestras aplicaciones. Aunque no es necesario aprender todo sobre el funcionamiento interno de Spring Security, esta es una oportunidad para apreciar el valor de entender qué sucede detrás de escena, ayudándonos a ser desarrolladores más informados y competentes. ¡Continúa aprendiendo y explorando! Te espero en la próxima clase para hablar sobre la protección CSRF en Spring.
 
 
+# 07-Deshabilitar protección CSRF en APIs REST con Spring Security
+
+Creado: 16 de octubre de 2025 9:21
+ítem principal: 02-CONFIGURACIÓN DE  SEGURIDAD (https://www.notion.so/02-CONFIGURACI-N-DE-SEGURIDAD-28cf5b42f770805d83e6d201c527381a?pvs=21)
+
+## **¿Qué es un ataque CSRF y por qué es peligroso?**
+
+Los ataques CSRF, o Cross-Site Request Forgery, son una vulnerabilidad web donde **un atacante envia solicitudes hábilmente disfrazadas de un usuario autorizado**. Estos ataques aprovechan el hecho de que los navegadores web envían automáticamente información de sesión guardada, como cookies, en cada solicitud a un dominio específico.
+
+### **Ejemplo de ataque CSRF en acción**
+
+Un escenario común de un ataque CSRF podría ser el de una sesión bancaria en línea. Supongamos que iniciaste sesión en tu banco y tienes un formulario de transferencia bancaria que usa un método POST para enviar datos cuando decides transferir dinero. Mientras tienes esa sesión abierta, visitas otro sitio malintencionado que, al hacer clic en un botón que aparentemente reproduce videos, realiza una solicitud de transferencia con tus credenciales al banco, redirigiendo fondos de tu cuenta a la cuenta del atacante.
+
+¿Cómo sucede esto? Básicamente, el botón en el sitio malintencionado ejecuta un formulario similar en segundo plano hacia la URL del banco, enviando los datos de la transferencia fraudulenta, que el banco procesa como legítimos debido a que las cookies válidas de sesión se enviaron automáticamente con la solicitud.
+
+## **¿Cómo prevenir ataques CSRF?**
+
+Para evitar la explotación de CSRF, se utiliza comúnmente un token de seguridad único y aleatorio. Este token se envía junto con los datos del formulario y el servidor lo valida, permitiendo solo las solicitudes con un token válido, asegurando su origen legítimo. De esta manera, se previene que un sitio no autorizado realice solicitudes en tu nombre, ya que no puede suministrar un token válido.
+
+### **Solución utilizando tokens CSRF**
+
+La implementación de tokens CSRF generalmente implica:
+
+- **Generación de Tokens**: El servidor genera un token único para cada sesión o solicitud.
+- **Validación del Token**: Cuando el usuario envía una solicitud, el token debe ser incorporado como un campo oculto en el formulario. El servidor valida si el token coincide antes de procesar la solicitud.
+
+## **Deshabilitando CSRF en APIs RESTful**
+
+Dicho esto, puedes estar preguntándote por qué se describe cómo deshabilitar esta protección en una clase. La razón se debe a la naturaleza sin estado (stateless) de las APIs RESTful modernas, generalmente orientadas a mejorar el rendimiento y escalabilidad utilizando tokens de seguridad en headers HTTP, como los JSON Web Tokens (JWT).
+
+### **Configuración para una API sin estado**
+
+En un contexto de API Stateless, las cookies no se utilizan para mantener el estado de autenticación del usuario. En su lugar, cada solicitud incluye un token de autenticación en el cabezal HTTP. Así, podrías prescindir de la protección CSRF si cumples los siguientes principios:
+
+- **Autenticación basada en tokens**: Empleando sistemas de seguridad JWT, los tokens se agregan al header HTTP `Authorization` para autenticar cada solicitud.
+- **Request Headers en lugar de Cookies**: Las solicitudes se autentican mediante headers en lugar de cookies, eliminando uno de los vectores comunes de ataque CSRF.
+
+### **Deshabilitando la protección CSRF en Spring Security**
+
+En el contexto en que se realiza el estudio de la clase, se muestra cómo deshabilitar el CSRF en una aplicación Spring Security. A menudo, no es recomendable a menos que se utilice un enfoque basado en tokens robusto. A continuación, un ejemplo del código relevante en Java:
+
+```java
+@Configuration
+public class SecurityConfig {
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+					      // Deshabilitación de la protección CSRF
+					      // Debido a que se utilizará (Api Stateless + JWT)*
+                .csrf(AbstractHttpConfigurer::disable)
+                // 
+                .authorizeHttpRequests( auth -> auth
+                        .anyRequest().authenticated()
+                )
+                .httpBasic(Customizer.withDefaults());
+        return http.build();
+    }
+}
+
+```
+
+Esto implica que suficientemente seguro si se asegura que todas las peticiones se autentican a través de un Token JWT en los headers, fortaleciendo así el esquema general de seguridad.
+
+## **Implementación Post-CSRF y Seguridad**
+
+Al concluir la configuración adecuada de tu API REST, el siguiente paso común es implementar la configuración de CORS para permitir que la API sea consumida desde diferentes fuentes, admitiendo solicitudes cross-origin de manera segura. Recordemos que la seguridad en una aplicación es un conjunto de buenas prácticas y herramientas que deben complementarse entre sí para formar una barrera sólida contra posibles amenazas.
+
+
+
+
+
 
 
