@@ -412,8 +412,75 @@ Esto implica que suficientemente seguro si se asegura que todas las peticiones s
 Al concluir la configuración adecuada de tu API REST, el siguiente paso común es implementar la configuración de CORS para permitir que la API sea consumida desde diferentes fuentes, admitiendo solicitudes cross-origin de manera segura. Recordemos que la seguridad en una aplicación es un conjunto de buenas prácticas y herramientas que deben complementarse entre sí para formar una barrera sólida contra posibles amenazas.
 
 
+# 08-Configuración de CORS en Spring Security para APIs y Frontend
+
+Creado: 17 de octubre de 2025 11:25
+ítem principal: 02-CONFIGURACIÓN DE  SEGURIDAD (https://www.notion.so/02-CONFIGURACI-N-DE-SEGURIDAD-28cf5b42f770805d83e6d201c527381a?pvs=21)
+
+## **¿Qué es CORS y cómo afecta a tu aplicación?**
+
+Cuando trabajamos en proyectos web divididos en frontend y backend, a menudo tratamos con el intercambio de recursos entre diferentes orígenes. Esto es especialmente común cuando la aplicación frontend se ejecuta desde un dominio y el backend desde otro. Aquí es donde entra CORS (Cross-Origin Resource Sharing), un sistema crucial para permitir o restringir tales interacciones por razones de seguridad.
+
+Por defecto, los frameworks como Spring bloquean estas peticiones cruzadas. Esto puede ser un obstáculo si, por ejemplo, nuestro frontend se ejecuta en `localhost:4200` usando Angular, y nuestro API backend corre en `localhost:8080`. Afortunadamente, Spring Security ofrece mecanismos para configurar y habilitar CORS, permitiendo así que aplicaciones de frontend puedan comunicarse con APIs alojadas en diferentes dominios.
+
+### **¿Cómo se implementa CORS en Spring Security?**
+
+Para gestionar CORS en una aplicación Spring, es necesario modificar algunas configuraciones del backend. Esto asegura que tu aplicación pueda reconocer y permitir peticiones legítimas desde otros orígenes.
+
+1. **Deshabilitar CSRF y habilitar CORS**:
+    - Desde el backend, después de deshabilitar CSRF (Cross-Site Request Forgery), habilitamos CORS usando `.cors(*Customizer*.*withDefaults*())` Esto asegura que las configuraciones de CORS y las peticiones autorizadas se consideren.
+2. **Anotación a métodos específicos**:
+    - Utiliza la anotación `@CrossOrigin` en los métodos de tus controladores para permitir accesos desde orígenes específicos. Por ejemplo:
+
+        ```java
+        @CrossOrigin(origins = "http://localhost:4200")
+        public ResponseEntity<Pizza> getPizzas() {
+            // Tu lógica aquí
+        }
+        
+        ```
+
+3. **Implementación de una configuración global**:
+    - Para evitar anotar cada método individualmente, puedes definir una configuración global. Esto se realiza creando una nueva clase configuradora:
+
+        ```java
+        @Configuration
+        public class CorsConfig {
+        
+            @Bean
+            CorsConfigurationSource corsConfigurationSource() {
+                CorsConfiguration corsConfiguration = new CorsConfiguration();
+        
+                corsConfiguration.setAllowedOrigins(List.of("http://localhost:4200"));
+                corsConfiguration.setAllowedMethods(Arrays.asList("GET","POST","PUT","DELETE"));
+                corsConfiguration.setAllowedHeaders(List.of("*"));
+        
+                UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+                source.registerCorsConfiguration("/**", corsConfiguration);
+                return source;
+            }
+        }
+        
+        ```
 
 
+### **¿Qué beneficios trae la configuración global de CORS?**
+
+Optar por una configuración global de CORS en un proyecto tiene varias ventajas:
+
+- **Simplicidad y Mantenimiento**: Centralizar las configuraciones hace que el mantenimiento del código sea más sencillo. Cualquier cambio en las políticas de origen solo requiere una modificación en el archivo de configuración.
+- **Consistencia**: Proporciona una manera uniforme de gestionar el acceso a todos los controladores y métodos, asegurando una protección constante y sin omisiones.
+- **Escalabilidad**: Facilita la ampliación de las políticas de acceso conforme el proyecto crece, simplificando la adición de nuevos métodos y controladores que necesitan el mismo manejo de políticas de acceso.
+
+### **¿Cómo asegurar un despliegue exitoso?**
+
+Después de implementar la configuración de CORS, es vital verificar el funcionamiento de la aplicación:
+
+1. **Inicializa la aplicación**: Lanza la aplicación backend y revisa que la configuración de CORS se carga correctamente. Esto se puede verificar revisando las trazas del servidor.
+2. **Validación de Seguridad**: Siempre asegúrate de que las políticas de seguridad no han sido alteradas inadvertidamente. Uso de herramientas como Postman para comprobar la autenticación de peticiones asegura que todo funciona como esperabas.
+3. **Prueba desde el frontend**: Finalmente, accede al frontend y realiza pruebas desde diferentes entornos (navegadores, dispositivos) para confirmar que las peticiones cross-origin funcionan y se manejan correctamente.
+
+Con esta configuración, Spring Security te permite gestionar las políticas de acceso entre orígenes de manera eficiente. ¡Sigue aprendiendo y explorando las funcionalidades que estos marcos pueden ofrecer a tus proyectos!
 
 
 
