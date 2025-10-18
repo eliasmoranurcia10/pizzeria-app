@@ -709,3 +709,136 @@ Al implementar estos pasos, has creado exitosamente usuarios personalizados en S
 
 
 
+# 11-Creación y Gestión de Roles y Permisos en Aplicaciones Web
+
+Creado: 18 de octubre de 2025 14:20
+ítem principal: 02-CONFIGURACIÓN DE  SEGURIDAD (https://www.notion.so/02-CONFIGURACI-N-DE-SEGURIDAD-28cf5b42f770805d83e6d201c527381a?pvs=21)
+
+## **¿Cómo gestionar roles de usuario en aplicaciones web modernas?**
+
+Las aplicaciones web modernas gestionan de manera eficaz los roles y permisos de los usuarios para garantizar la seguridad y funcionalidad del sistema. Este enfoque permite controlar y delimitar las acciones que pueden o no realizar los usuarios según sus roles. A continuación, exploramos cómo implementar diferentes roles y gestionar permisos a través de ejemplos prácticos, como los de un administrador y un cliente dentro de una API.
+
+### **¿Cómo crear usuarios con roles personalizados?**
+
+Cuando se desarrolla una aplicación, es crucial definir y crear diferentes tipos de usuarios, cada uno con roles específicos que determinen sus capacidades dentro del sistema. Aquí te presentamos un ejemplo de cómo crear un segundo usuario con un rol distinto:
+
+```java
+@Bean
+public UserDetailsService memoryUsers() {
+    UserDetails admin = User.builder()
+            .username("admin")
+            .password(passwordEncoder().encode("admin"))
+            .roles("ADMIN")
+            .build();
+
+    UserDetails customer = User.builder()
+            .username("customer")
+            .password(passwordEncoder().encode("customer123"))
+            .roles("CUSTOMER")
+            .build();
+
+    return new InMemoryUserDetailsManager(admin, customer);
+}
+
+```
+
+En este ejemplo, además de un usuario **admin**, se añade un usuario **Customer**, con su respectiva contraseña y el rol **CUSTOMER**. Esto permite tener disponibles dos tipos de usuarios con capacidades diferenciadas dentro del sistema.
+
+### **¿Cómo aplicar permisos específicos a cada rol?**
+
+Para especificar qué acciones puede realizar cada rol, es necesario definir reglas dentro del **Filter Chain**. Este enfoque nos ayuda a asegurar que cada rol de usuario tiene acceso a las operaciones adecuadas.
+
+1. **GET para múltiples roles**:
+    - Se permite que tanto un administrador como un cliente puedan acceder al método GET en un determinado endpoint.
+
+    ```java
+    @Bean
+        public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+            http
+                    .csrf(AbstractHttpConfigurer::disable)
+                    .cors(Customizer.withDefaults())
+                    .authorizeHttpRequests( auth -> auth
+                            .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").hasRole("ADMIN")
+                            //Ejemplo
+                            .requestMatchers(HttpMethod.GET,"/api/pizzas/**").hasAnyRole("ADMIN","CUSTOMER")
+                            //----------------
+                            .requestMatchers(HttpMethod.POST,"/api/pizzas/**").hasRole("ADMIN")
+                            .requestMatchers(HttpMethod.PUT).hasRole("ADMIN")
+                            .requestMatchers("/api/orders/**").hasRole("ADMIN")
+                            .anyRequest().authenticated()
+                    )
+                    .httpBasic(Customizer.withDefaults());
+            return http.build();
+        }
+    
+    ```
+
+2. **POST exclusivo para administradores**:
+    - Restringe el método POST solo a usuarios con rol de administrador, protegiendo operaciones críticas de modificación de datos.
+
+    ```java
+    @Bean
+        public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+            http
+                    .csrf(AbstractHttpConfigurer::disable)
+                    .cors(Customizer.withDefaults())
+                    .authorizeHttpRequests( auth -> auth
+                            .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").hasRole("ADMIN")
+                            .requestMatchers(HttpMethod.GET,"/api/pizzas/**").hasAnyRole("ADMIN","CUSTOMER")
+                            // Ejemplo
+                            .requestMatchers(HttpMethod.POST,"/api/pizzas/**").hasRole("ADMIN")
+                            //------------------------------------
+                            .requestMatchers(HttpMethod.PUT).hasRole("ADMIN")
+                            .requestMatchers("/api/orders/**").hasRole("ADMIN")
+                            .anyRequest().authenticated()
+                    )
+                    .httpBasic(Customizer.withDefaults());
+            return http.build();
+        }
+    
+    ```
+
+3. **Protección total para endpoints críticos**:
+    - Gareth sich implementando una cláusula para las órdenes, asegurándose que únicamente los administradores puedan gestionarlas.
+
+    ```java
+    @Bean
+        public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+            http
+                    .csrf(AbstractHttpConfigurer::disable)
+                    .cors(Customizer.withDefaults())
+                    .authorizeHttpRequests( auth -> auth
+                            .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").hasRole("ADMIN")
+                            .requestMatchers(HttpMethod.GET,"/api/pizzas/**").hasAnyRole("ADMIN","CUSTOMER")
+                            .requestMatchers(HttpMethod.POST,"/api/pizzas/**").hasRole("ADMIN")
+                            .requestMatchers(HttpMethod.PUT).hasRole("ADMIN")
+                            // Ejemplo---
+                            .requestMatchers("/api/orders/**").hasRole("ADMIN")
+                            // -----------------
+                            .anyRequest().authenticated()
+                    )
+                    .httpBasic(Customizer.withDefaults());
+            return http.build();
+        }
+    
+    ```
+
+
+### **¿Cómo probar los permisos de acceso?**
+
+Para verificar que las configuraciones de permiso y roles funcionen adecuadamente, es recomendable realizar pruebas usando herramientas como Postman. Por ejemplo:
+
+- **Usuario Cliente**: Intentar realizar un GET en `/api/pizzas` devuelve un éxito al estar permitido.
+- **Consultar órdenes**: Intentar un GET en `/api/orders` mostrará un error 403, porque el rol `CUSTOMER` no tiene permisos de acceso.
+
+Si utilizamos las credenciales de un administrador, estas restricciones no se aplicarán en el acceso a las órdenes.
+
+### **¿Qué pasos seguir para una autenticación robusta?**
+
+Ahora que se tienen roles y permisos básicos implementados, el siguiente paso es integrar un sistema de gestión de usuarios basado en una base de datos como MySQL. Este enfoque mejorará la autenticación y facilitará la gestión de usuarios en entornos más complejos y dinámicos.
+
+Es momento de seguir aprendiendo y explorar cómo integrar el uso de bases de datos para manejar usuarios y autenticaciones. ¡No te detengas aquí, sigue adelante para construir una aplicación segura y eficiente!
+
+
+
+
