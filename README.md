@@ -118,7 +118,7 @@ implementation 'org.springframework.boot:spring-boot-starter-security'
 
 ### **¿Cómo verifica los cambios en la aplicación con Spring Security?**
 
-Una vez que la aplicación se reinicie, utiliza Postman para enviar peticiones a la API. Al integrar Spring Security, todas las solicitudes serán automáticamente interceptadas por el `Spring Security Filter Chain`. Este cambio se reflejará en el resultado devuelto, el cual mostrará un error 401 si la petición no está autenticada correctamente.
+Una vez que la aplicación se reinicie, utiliza Postman para enviar peticiones a la API. Al integrar Spring Security, todas las solicitudes serán automáticamente interceptadas por el  `Spring Security Filter Chain`. Este cambio se reflejará en el resultado devuelto, el cual mostrará un error 401 si la petición no está autenticada correctamente.
 
 ### **Consejos y recomendaciones prácticas**
 
@@ -170,9 +170,674 @@ Spring Security incluye una cadena de filtros, conocida como `Spring Security f
 - Autorizar el acceso a los recursos
 - Proteger tu aplicación contra diferentes tipos de ataques y vulnerabilidades
 
-Es esencial comprender cómo se configuran y funcionan estos filtros ya que son la base de la seguridad en Spring.
+Es esencial comprender cómo se configuran y funcionan estos filtros, ya que son la base de la seguridad en Spring.
 
 Invierte tiempo explorando y experimentando con estas configuraciones. Esto te proporcionará una sólida base en seguridad para el desarrollo de aplicaciones con Spring. Y no olvides, conocer a fondo el funcionamiento de los sistemas de seguridad te otorgará confianza y competencia en tus proyectos futuros. ¡Sigue aprendiendo y mejorando tus habilidades!
+
+
+
+# 05-Configuración de Seguridad con Spring Security y Basic Authentication
+
+Creado: 15 de octubre de 2025 17:16
+ítem principal: 01-INTRODUCCIÓN (https://www.notion.so/01-INTRODUCCI-N-28cf5b42f77080a7827ad8e792773abc?pvs=21)
+
+## **¿Cómo podemos configurar un Security Filter Chain en Spring?**
+
+Crear un Security Filter Chain en Spring nos permite manejar la seguridad de nuestras aplicaciones, definiendo cómo se autenticará y autorizará cada petición HTTP. Primero, debemos crear un paquete específico para la configuración de seguridad y una clase donde implementaremos los filtros necesarios.
+
+### **¿Cómo creamos la configuración inicial de seguridad?**
+
+1. **Crear un paquete nuevo**: Dentro de la capa web del proyecto, crea un paquete llamado `Config`.
+2. **Anotar la clase con @Configuration**: Esto permite que Spring gestione e inyecte automáticamente este bean dentro de la aplicación.
+3. **Definir el método Security Filter Chain**: Crea un método público que retorne un `SecurityFilterChain` y reciba un `HttpSecurity` como parámetro.
+
+```java
+@Configuration
+public class SecurityConfig {
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+			// ...
+    }
+}
+
+```
+
+### **¿Cómo permitimos o restringimos peticiones HTTP?**
+
+Definir las reglas para autorizar peticiones es crucial para proteger una aplicación. Inicialmente, podemos permitir todas las peticiones, y posteriormente, aplicar seguridad ajustando estas configuraciones.
+
+- **Permitir todas las peticiones**: Esto esencialmente elimina las capas de autenticación.
+
+    ```java
+    @Configuration
+    public class SecurityConfig {
+    
+        @Bean
+        public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+            http
+                    .authorizeHttpRequests( auth -> auth
+                            .anyRequest().permitAll()
+                    );
+            return http.build();
+        }
+    }
+    
+    ```
+
+- **Requerir autenticación básica para todas las peticiones**: Prioriza la seguridad solicitando autenticación en cada acceso.
+
+    ```java
+    @Configuration
+    public class SecurityConfig {
+    
+        @Bean
+        public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+            http
+                    .authorizeHttpRequests( auth -> auth
+                            .anyRequest().authenticated()
+                    )
+                    .httpBasic(Customizer.withDefaults());
+            return http.build();
+        }
+    }
+    
+    ```
+
+
+### **¿Cómo validamos la configuración con Postman?**
+
+Con la configuración inicial realizada, verifica el comportamiento utilizando herramientas como Postman:
+
+1. **Probar sin autorización**: Elimina el encabezado de autorización y envía la petición. Si logras recibir una respuesta, significa que la seguridad está desactivada.
+2. **Activar Basic Authentication**: Configura la autenticación básica con el usuario y contraseña generados por Spring. Observa que las peticiones ahora requieren credenciales válidas.
+
+En el código, aseguramos que las peticiones usen autenticación básica y verificamos el funcionamiento del filtro correspondiente:
+
+```java
+@Configuration
+    public class SecurityConfig {
+    
+        @Bean
+        public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+            http
+                    .authorizeHttpRequests( auth -> auth
+                            .anyRequest().authenticated()
+                    )
+                    .httpBasic(Customizer.withDefaults());
+            return http.build();
+        }
+    }
+
+```
+
+Al lanzar la aplicación, el filtro `BasicAuthenticationFilter` gestionará las autenticaciones. Si el header de la autorización no está presente o es incorrecto, la petición será denegada.
+
+### **¿Qué debemos tener en cuenta al implementar seguridad en Spring?**
+
+- **Gestión de usuarios y contraseñas**: Usar `User` como el usuario por defecto puede ser seguro para desarrollo, pero en producción es crucial personalizar estas credenciales.
+- **Desactivar filtros innecesarios**: Spring incluye múltiples filtros por defecto. Solo mantén los relevantes para tu caso y desactiva el resto explícitamente.
+- **Revisar la documentación de Spring Security**: Spring es una herramienta poderosa, y conocer sus capacidades nos ayudará a adaptar más funcionalidades.
+
+Este enfoque fortalece tu aplicación contra accesos no autorizados e intenta hacerlo accesible a usuarios válidos. Continúa explorando y ampliando tus habilidades en seguridad con Spring para dominar estos conceptos.
+
+
+
+# 06-Funcionamiento del Basic Authentication Filter en Spring Security
+
+Creado: 15 de octubre de 2025 23:34
+ítem principal: 02-CONFIGURACIÓN DE  SEGURIDAD (https://www.notion.so/02-CONFIGURACI-N-DE-SEGURIDAD-28cf5b42f770805d83e6d201c527381a?pvs=21)
+
+## **¿Cómo funciona el Basic Authentication Filter en Spring Security?**
+
+El proceso de autenticación en Spring Security es una pieza fundamental para garantizar la seguridad de nuestras aplicaciones. Al delegar este proceso a un filtro en el Security Filter Chain, específicamente el Basic Authentication Filter, se asegura de que las credenciales del usuario sean correctas antes de otorgar acceso a recursos protegidos. Pero, ¿cómo funciona realmente este filtro?
+
+### **¿Qué sucede cuando se recibiere una petición?**
+
+- **Interceptación de la petición:** La cadena de filtros de Spring Security captura la petición y la pasa por todos los filtros de seguridad configurados.
+- **Verificación de credenciales:** Al llegar al Basic Authentication Filter, se verifica si el usuario y la contraseña enviados son correctos.
+
+```plain text
+Authentication Request
+➜ [ Security Filter A ] ➜ [ Basic Authentication Filter ] ➜ [ ... ] ➜ [ Security Filter N ]
+➜ [ Authentication Manager ]
+➜ [ Authentication Provider (Default: DaoAuthenticationProvider) ]
+➜ [ User Details Service (Default: InMemoryUserDetailsManager) ]
+➜ Authentication Response
+```
+
+### **¿Qué rol tiene el Authentication Manager?**
+
+El Authentication Manager actúa como un coordinador en el proceso de autenticación, decidiendo cómo debe autenticar al usuario:
+
+- **Selecciona el método de autenticación:** Determina si la autenticación será mediante usuario y contraseña, Auth0, LDAP, etc.
+- **Interacción con Authentication Provider:** En el caso del Basic Authentication Filter, usa el DAO Authentication Provider para verificar las credenciales de usuario y contraseña.
+
+### **¿Cómo es el flujo con el DAO Authentication Provider?**
+
+El flujo continúa con el DAO Authentication Provider, el cual:
+
+- **Consulta al User Detail Service:** Como se utilizan usuarios y contraseñas en memoria por Spring, emplea el In-Memory User Detail Service.
+- **Verificación de contraseña:** Compara la contraseña proporcionada con la almacenada para el usuario solicitado.
+
+### **¿Cómo realizar un debug en el Basic Authentication Filter?**
+
+Para comprender mejor este proceso, se puede hacer un debug en el código de Spring. La clave está en el método `doFilterInternal` del Basic Authentication Filter, donde:
+
+1. **Establecer puntos de interés:** Colocar puntos de control en líneas clave para seguir el flujo de autenticación.
+2. **Lanzar la aplicación en modo debug:** Permitir que la aplicación se detenga en estos puntos para examinar el estado del proceso.
+3. **Observar el paso a través de las líneas:** Verificar cómo se gestiona el `UserPasswordAuthenticationToken` y cómo interactúa con el `AuthenticationManager`.
+
+### **¿Cuál es el papel del Abstract User Details Authentication Provider?**
+
+El Abstract User Details Authentication Provider establece algunas validaciones preliminares importantes:
+
+- **Carga del usuario:** A través del método `retrieveUser`, se recupera el usuario desde un In-MemoryUserDetailsService.
+- **Validación del usuario y la contraseña:** Desde la línea 147, se asegura de que la contraseña proporcionada coincida con la almacenada.
+
+### **¿Qué resultados se obtienen tras la verificación?**
+
+- **Autenticación exitosa:** Si las credenciales son correctas, el usuario se carga en el contexto de seguridad.
+- **Respuesta a la petición:** Finalmente, el sistema responde con un status 200 confirmando que el proceso ha sido exitoso.
+
+Como desarrolladores, es esencial ir más allá del uso superficial de frameworks como Spring Security. Comprender cómo funciona internamente, especialmente la autenticación básica, proporciona una visión más clara y nos capacita para gestionar mejor la seguridad en nuestras aplicaciones. Aunque no es necesario aprender todo sobre el funcionamiento interno de Spring Security, esta es una oportunidad para apreciar el valor de entender qué sucede detrás de escena, ayudándonos a ser desarrolladores más informados y competentes. ¡Continúa aprendiendo y explorando! Te espero en la próxima clase para hablar sobre la protección CSRF en Spring.
+
+
+# 07-Deshabilitar protección CSRF en APIs REST con Spring Security
+
+Creado: 16 de octubre de 2025 9:21
+ítem principal: 02-CONFIGURACIÓN DE  SEGURIDAD (https://www.notion.so/02-CONFIGURACI-N-DE-SEGURIDAD-28cf5b42f770805d83e6d201c527381a?pvs=21)
+
+## **¿Qué es un ataque CSRF y por qué es peligroso?**
+
+Los ataques CSRF, o Cross-Site Request Forgery, son una vulnerabilidad web donde **un atacante envia solicitudes hábilmente disfrazadas de un usuario autorizado**. Estos ataques aprovechan el hecho de que los navegadores web envían automáticamente información de sesión guardada, como cookies, en cada solicitud a un dominio específico.
+
+### **Ejemplo de ataque CSRF en acción**
+
+Un escenario común de un ataque CSRF podría ser el de una sesión bancaria en línea. Supongamos que iniciaste sesión en tu banco y tienes un formulario de transferencia bancaria que usa un método POST para enviar datos cuando decides transferir dinero. Mientras tienes esa sesión abierta, visitas otro sitio malintencionado que, al hacer clic en un botón que aparentemente reproduce videos, realiza una solicitud de transferencia con tus credenciales al banco, redirigiendo fondos de tu cuenta a la cuenta del atacante.
+
+¿Cómo sucede esto? Básicamente, el botón en el sitio malintencionado ejecuta un formulario similar en segundo plano hacia la URL del banco, enviando los datos de la transferencia fraudulenta, que el banco procesa como legítimos debido a que las cookies válidas de sesión se enviaron automáticamente con la solicitud.
+
+## **¿Cómo prevenir ataques CSRF?**
+
+Para evitar la explotación de CSRF, se utiliza comúnmente un token de seguridad único y aleatorio. Este token se envía junto con los datos del formulario y el servidor lo valida, permitiendo solo las solicitudes con un token válido, asegurando su origen legítimo. De esta manera, se previene que un sitio no autorizado realice solicitudes en tu nombre, ya que no puede suministrar un token válido.
+
+### **Solución utilizando tokens CSRF**
+
+La implementación de tokens CSRF generalmente implica:
+
+- **Generación de Tokens**: El servidor genera un token único para cada sesión o solicitud.
+- **Validación del Token**: Cuando el usuario envía una solicitud, el token debe ser incorporado como un campo oculto en el formulario. El servidor valida si el token coincide antes de procesar la solicitud.
+
+## **Deshabilitando CSRF en APIs RESTful**
+
+Dicho esto, puedes estar preguntándote por qué se describe cómo deshabilitar esta protección en una clase. La razón se debe a la naturaleza sin estado (stateless) de las APIs RESTful modernas, generalmente orientadas a mejorar el rendimiento y escalabilidad utilizando tokens de seguridad en headers HTTP, como los JSON Web Tokens (JWT).
+
+### **Configuración para una API sin estado**
+
+En un contexto de API Stateless, las cookies no se utilizan para mantener el estado de autenticación del usuario. En su lugar, cada solicitud incluye un token de autenticación en el cabezal HTTP. Así, podrías prescindir de la protección CSRF si cumples los siguientes principios:
+
+- **Autenticación basada en tokens**: Empleando sistemas de seguridad JWT, los tokens se agregan al header HTTP `Authorization` para autenticar cada solicitud.
+- **Request Headers en lugar de Cookies**: Las solicitudes se autentican mediante headers en lugar de cookies, eliminando uno de los vectores comunes de ataque CSRF.
+
+### **Deshabilitando la protección CSRF en Spring Security**
+
+En el contexto en que se realiza el estudio de la clase, se muestra cómo deshabilitar el CSRF en una aplicación Spring Security. A menudo, no es recomendable a menos que se utilice un enfoque basado en tokens robusto. A continuación, un ejemplo del código relevante en Java:
+
+```java
+@Configuration
+public class SecurityConfig {
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+					      // Deshabilitación de la protección CSRF
+					      // Debido a que se utilizará (Api Stateless + JWT)*
+                .csrf(AbstractHttpConfigurer::disable)
+                // 
+                .authorizeHttpRequests( auth -> auth
+                        .anyRequest().authenticated()
+                )
+                .httpBasic(Customizer.withDefaults());
+        return http.build();
+    }
+}
+
+```
+
+Esto implica que suficientemente seguro si se asegura que todas las peticiones se autentican a través de un Token JWT en los headers, fortaleciendo así el esquema general de seguridad.
+
+## **Implementación Post-CSRF y Seguridad**
+
+Al concluir la configuración adecuada de tu API REST, el siguiente paso común es implementar la configuración de CORS para permitir que la API sea consumida desde diferentes fuentes, admitiendo solicitudes cross-origin de manera segura. Recordemos que la seguridad en una aplicación es un conjunto de buenas prácticas y herramientas que deben complementarse entre sí para formar una barrera sólida contra posibles amenazas.
+
+
+# 08-Configuración de CORS en Spring Security para APIs y Frontend
+
+Creado: 17 de octubre de 2025 11:25
+ítem principal: 02-CONFIGURACIÓN DE  SEGURIDAD (https://www.notion.so/02-CONFIGURACI-N-DE-SEGURIDAD-28cf5b42f770805d83e6d201c527381a?pvs=21)
+
+## **¿Qué es CORS y cómo afecta a tu aplicación?**
+
+Cuando trabajamos en proyectos web divididos en frontend y backend, a menudo tratamos con el intercambio de recursos entre diferentes orígenes. Esto es especialmente común cuando la aplicación frontend se ejecuta desde un dominio y el backend desde otro. Aquí es donde entra CORS (Cross-Origin Resource Sharing), un sistema crucial para permitir o restringir tales interacciones por razones de seguridad.
+
+Por defecto, los frameworks como Spring bloquean estas peticiones cruzadas. Esto puede ser un obstáculo si, por ejemplo, nuestro frontend se ejecuta en `localhost:4200` usando Angular, y nuestro API backend corre en `localhost:8080`. Afortunadamente, Spring Security ofrece mecanismos para configurar y habilitar CORS, permitiendo así que aplicaciones de frontend puedan comunicarse con APIs alojadas en diferentes dominios.
+
+### **¿Cómo se implementa CORS en Spring Security?**
+
+Para gestionar CORS en una aplicación Spring, es necesario modificar algunas configuraciones del backend. Esto asegura que tu aplicación pueda reconocer y permitir peticiones legítimas desde otros orígenes.
+
+1. **Deshabilitar CSRF y habilitar CORS**:
+    - Desde el backend, después de deshabilitar CSRF (Cross-Site Request Forgery), habilitamos CORS usando `.cors(*Customizer*.*withDefaults*())` Esto asegura que las configuraciones de CORS y las peticiones autorizadas se consideren.
+2. **Anotación a métodos específicos**:
+    - Utiliza la anotación `@CrossOrigin` en los métodos de tus controladores para permitir accesos desde orígenes específicos. Por ejemplo:
+
+        ```java
+        @CrossOrigin(origins = "http://localhost:4200")
+        public ResponseEntity<Pizza> getPizzas() {
+            // Tu lógica aquí
+        }
+        
+        ```
+
+3. **Implementación de una configuración global**:
+    - Para evitar anotar cada método individualmente, puedes definir una configuración global. Esto se realiza creando una nueva clase configuradora:
+
+        ```java
+        @Configuration
+        public class CorsConfig {
+        
+            @Bean
+            CorsConfigurationSource corsConfigurationSource() {
+                CorsConfiguration corsConfiguration = new CorsConfiguration();
+        
+                corsConfiguration.setAllowedOrigins(List.of("http://localhost:4200"));
+                corsConfiguration.setAllowedMethods(Arrays.asList("GET","POST","PUT","DELETE"));
+                corsConfiguration.setAllowedHeaders(List.of("*"));
+        
+                UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+                source.registerCorsConfiguration("/**", corsConfiguration);
+                return source;
+            }
+        }
+        
+        ```
+
+
+### **¿Qué beneficios trae la configuración global de CORS?**
+
+Optar por una configuración global de CORS en un proyecto tiene varias ventajas:
+
+- **Simplicidad y Mantenimiento**: Centralizar las configuraciones hace que el mantenimiento del código sea más sencillo. Cualquier cambio en las políticas de origen solo requiere una modificación en el archivo de configuración.
+- **Consistencia**: Proporciona una manera uniforme de gestionar el acceso a todos los controladores y métodos, asegurando una protección constante y sin omisiones.
+- **Escalabilidad**: Facilita la ampliación de las políticas de acceso conforme el proyecto crece, simplificando la adición de nuevos métodos y controladores que necesitan el mismo manejo de políticas de acceso.
+
+### **¿Cómo asegurar un despliegue exitoso?**
+
+Después de implementar la configuración de CORS, es vital verificar el funcionamiento de la aplicación:
+
+1. **Inicializa la aplicación**: Lanza la aplicación backend y revisa que la configuración de CORS se carga correctamente. Esto se puede verificar revisando las trazas del servidor.
+2. **Validación de Seguridad**: Siempre asegúrate de que las políticas de seguridad no han sido alteradas inadvertidamente. Uso de herramientas como Postman para comprobar la autenticación de peticiones asegura que todo funciona como esperabas.
+3. **Prueba desde el frontend**: Finalmente, accede al frontend y realiza pruebas desde diferentes entornos (navegadores, dispositivos) para confirmar que las peticiones cross-origin funcionan y se manejan correctamente.
+
+Con esta configuración, Spring Security te permite gestionar las políticas de acceso entre orígenes de manera eficiente. ¡Sigue aprendiendo y explorando las funcionalidades que estos marcos pueden ofrecer a tus proyectos!
+
+
+
+# 09-Configuración de Reglas de Acceso en Spring Security
+
+Creado: 17 de octubre de 2025 14:38
+ítem principal: 02-CONFIGURACIÓN DE  SEGURIDAD (https://www.notion.so/02-CONFIGURACI-N-DE-SEGURIDAD-28cf5b42f770805d83e6d201c527381a?pvs=21)
+
+## **¿Cómo se configuran las reglas de seguridad en Spring Security?**
+
+Spring Security nos permite definir reglas de seguridad para denegar o permitir el acceso a diferentes endpoints o métodos HTTP. Al configurar estas reglas, podemos proteger rutas específicas en nuestra aplicación según las necesidades del proyecto. Utilizaremos `request matchers` para establecer estas reglas, una manera flexible de aplicar criterios de seguridad personalizados.
+
+### **¿Qué son los request matchers?**
+
+Los **request matchers** son criterios que utilizamos para definir las reglas de acceso a nuestros endpoints. Esto se puede hacer especificando:
+
+- **El path o patrón**: Una ruta específica o patrón sobre el cual aplicar la regla.
+- **El método HTTP**: Combinado con un path, permite definir reglas para métodos específicos como GET, POST, etc.
+
+Por ejemplo, podemos crear una regla que permita todos los métodos GET en rutas que sigan el patrón `/api/*`.
+
+### **¿Cómo configurar y lanzar una aplicación con reglas de acceso específicas?**
+
+Al establecer reglas, es importante definir claramente las acciones sobre ellas. Podemos permitir, denegar o requerir roles específicos. Por simplicidad, mencionaremos cómo permitir acceso a ciertos métodos.
+
+### **Ejemplo básico**
+
+A continuación, presentamos un ejemplo de configuración básica permitiendo todos los métodos GET en cualquier ruta que comience con `/api/` seguido de cualquier subruta:
+
+```java
+@Configuration
+public class SecurityConfig {
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(Customizer.withDefaults())
+                .authorizeHttpRequests( auth -> auth
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        // Permite los métodos GET de api
+                        .requestMatchers(HttpMethod.GET,"/api/*").permitAll()
+                        // Denegar los métodos PUT
+                        .requestMatchers(HttpMethod.PUT).denyAll()
+                        .anyRequest().authenticated()
+                )
+                .httpBasic(Customizer.withDefaults());
+        return http.build();
+    }
+}
+
+```
+
+Este fragmento de código indica que todas las peticiones GET a rutas bajo `/api/` están permitidas. Si lanzamos la aplicación y probamos estas rutas usando herramientas como Postman, podemos ver una diferencia clara en el acceso permitido.
+
+### **¿Qué diferencia existe entre un asterisco y dos en los patrones?**
+
+El uso de **un solo asterisco (*)** en las rutas permite el acceso solo al siguiente nivel del path. Por ejemplo, `/api/*` permite acceso al primer nivel después de `/api/`. Así, una ruta `/api/pizzas` funcionará, pero `/api/pizzas/available` requerirá una configuración adicional.
+
+Por otro lado, **utilizar dos asteriscos (****) expande la autorización a cualquier subruta en todo el árbol después del sufijo indicado. Modifiquemos nuestro ejemplo previo:
+
+```java
+@Configuration
+public class SecurityConfig {
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(Customizer.withDefaults())
+                .authorizeHttpRequests( auth -> auth
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        .requestMatchers(HttpMethod.GET,"/api/**").permitAll()
+                        .requestMatchers(HttpMethod.PUT).denyAll()
+                        .anyRequest().authenticated()
+                )
+                .httpBasic(Customizer.withDefaults());
+        return http.build();
+    }
+}
+
+```
+
+Esto permite acceder a cualquier ruta bajo `/api/` sin restricciones adicionales.
+
+### **¿Cómo aplicamos reglas más específicas?**
+
+Podemos designar reglas para rutas específicas restringiendo el acceso a otras. Por ejemplo, si queremos que solo esté permitido el acceso a `/api/pizzas`:
+
+```java
+@Configuration
+public class SecurityConfig {
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(Customizer.withDefaults())
+                .authorizeHttpRequests( auth -> auth
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        // Ejemplo
+                        .requestMatchers(HttpMethod.GET,"/api/pizzas/**").permitAll()
+                        .requestMatchers(HttpMethod.PUT).denyAll()
+                        .anyRequest().authenticated()
+                )
+                .httpBasic(Customizer.withDefaults());
+        return http.build();
+    }
+}
+
+```
+
+Con esto, cualquier otra petición, por ejemplo, `/api/orders`, requerirá autenticación.
+
+### **¿Cómo podemos denegar acceso a ciertos métodos?**
+
+Es posible bloquear completamente un método HTTP en toda la aplicación. Supongamos que las reglas de negocio prohíben el uso del método PUT en todo el proyecto:
+
+```java
+@Configuration
+public class SecurityConfig {
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(Customizer.withDefaults())
+                .authorizeHttpRequests( auth -> auth
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        .requestMatchers(HttpMethod.GET,"/api/pizzas/**").permitAll()
+                        // Ejemplo
+                        .requestMatchers(HttpMethod.PUT).denyAll()
+                        .anyRequest().authenticated()
+                )
+                .httpBasic(Customizer.withDefaults());
+        return http.build();
+    }
+}
+
+```
+
+Esto denegará cualquier intento de uso del método PUT, sin importar la autenticación del usuario.
+
+## **Consejos prácticos para implementar reglas en Spring Security**
+
+- **Planifica tus reglas**: Asegúrate de que las rutas críticas y sensibles estén protegidas antes de lanzar tu aplicación.
+- **Prueba exhaustivamente**: Usa herramientas como Postman para verificar que la configuración de seguridad funcione como esperabas.
+- **Considera roles de usuario**: Aunque este ejemplo no cubre roles, piénsalo para una mayor granularidad en accesos.
+
+Seguir estos consejos te ayudará a mantener una aplicación segura, y te animamos a seguir profundizando en la seguridad de Spring Security. ¡No te detengas aquí! El futuro del desarrollo seguro depende de seguir aprendiendo y aplicando estas prácticas.
+
+
+
+
+# 10-Creación de usuarios personalizados en Spring Security
+
+Creado: 18 de octubre de 2025 13:38
+ítem principal: 02-CONFIGURACIÓN DE  SEGURIDAD (https://www.notion.so/02-CONFIGURACI-N-DE-SEGURIDAD-28cf5b42f770805d83e6d201c527381a?pvs=21)
+
+## **¿Cómo crear usuarios personalizados en Spring Security?**
+
+Crear usuarios personalizados en Spring Security es una práctica esencial para adaptarse a los requisitos de seguridad específicos de una aplicación. En lugar de utilizar usuarios generados automáticamente por el framework, se pueden definir usuarios en memoria que se personalicen según sea necesario. A continuación, exploraremos cómo implementar esto paso a paso.
+
+### **¿Cómo implementar UserDetailService?**
+
+Para empezar, debemos crear nuestra propia implementación de `UserDetailsService`. Este servicio es fundamental para gestionar la autenticación de usuarios en Spring Security.
+
+1. **Declarar el método**: Primero, se crea un método público que retorne un `UserDetailsService`.
+2. **Crear usuarios en memoria**: Utilizando el builder proporcionado por Spring, se construye un usuario, por ejemplo:
+
+    ```java
+    @Bean
+    public UserDetailsService memoryUsers() {
+        UserDetails admin = User.builder()
+                .username("admin")
+                .password(passwordEncoder().encode("admin"))
+                .roles("ADMIN")
+                .build();
+    
+        return new InMemoryUserDetailsManager(admin);
+    }
+    
+    ```
+
+
+En el ejemplo, hemos creado un usuario administrador llamado "admin" con contraseña "admin".
+
+### **¿Cómo configurar y codificar contraseñas?**
+
+### **Uso de Password Encoder**
+
+Para mantener la seguridad de las contraseñas, es crucial utilizar un `PasswordEncoder`. Spring recomienda usar algoritmos como `bcrypt` que ofrecen mayor protección.
+
+1. **Implementar un Password Encoder**: Se crea un `PasswordEncoder` y se lo anota como un `@Bean` para que Spring lo administre.
+
+    ```java
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+    
+    ```
+
+2. **Codificar la contraseña**: Se utiliza el `PasswordEncoder` para codificar y almacenar la contraseña.
+
+    ```java
+    String encodedPassword = passwordEncoder().encode("admin");
+    
+    ```
+
+
+### **¿Cómo probar la autenticación personalizada con Postman?**
+
+Una vez configurados los usuarios y el encoder, se puede proceder a verificar la autenticación a través de herramientas como Postman.
+
+- **Configurar autenticación básica**: En Postman, establece la autenticación básica usando el usuario "admin" y contraseña "admin".
+- **Ejecutar pruebas**: Al iniciar la aplicación y realizar peticiones autenticadas a servicios protegidos, se debe recibir un código 200 si todos los detalles coinciden.
+
+### **¿Qué errores comunes pueden surgir?**
+
+1. **PasswordEncoder no definido**: Si surge un error de falta de `PasswordEncoder`, asegúrate de que esté configurado adecuadamente y anotado en Spring.
+2. **Contraseña incorrecta**: Un código 401 indica un error en la autenticación. Revisa que tanto usuario como contraseña sean precisos y estén codificados correctamente.
+
+Al implementar estos pasos, has creado exitosamente usuarios personalizados en Spring y asegurado que las contraseñas se manejen con cifrado seguro. ¡Continúa explorando y personalizando más funciones de Spring Security! En la próxima lección, aprenderás a gestionar permisos para distintos roles de usuario. ¡No te lo pierdas!
+
+
+
+
+# 11-Creación y Gestión de Roles y Permisos en Aplicaciones Web
+
+Creado: 18 de octubre de 2025 14:20
+ítem principal: 02-CONFIGURACIÓN DE  SEGURIDAD (https://www.notion.so/02-CONFIGURACI-N-DE-SEGURIDAD-28cf5b42f770805d83e6d201c527381a?pvs=21)
+
+## **¿Cómo gestionar roles de usuario en aplicaciones web modernas?**
+
+Las aplicaciones web modernas gestionan de manera eficaz los roles y permisos de los usuarios para garantizar la seguridad y funcionalidad del sistema. Este enfoque permite controlar y delimitar las acciones que pueden o no realizar los usuarios según sus roles. A continuación, exploramos cómo implementar diferentes roles y gestionar permisos a través de ejemplos prácticos, como los de un administrador y un cliente dentro de una API.
+
+### **¿Cómo crear usuarios con roles personalizados?**
+
+Cuando se desarrolla una aplicación, es crucial definir y crear diferentes tipos de usuarios, cada uno con roles específicos que determinen sus capacidades dentro del sistema. Aquí te presentamos un ejemplo de cómo crear un segundo usuario con un rol distinto:
+
+```java
+@Bean
+public UserDetailsService memoryUsers() {
+    UserDetails admin = User.builder()
+            .username("admin")
+            .password(passwordEncoder().encode("admin"))
+            .roles("ADMIN")
+            .build();
+
+    UserDetails customer = User.builder()
+            .username("customer")
+            .password(passwordEncoder().encode("customer123"))
+            .roles("CUSTOMER")
+            .build();
+
+    return new InMemoryUserDetailsManager(admin, customer);
+}
+
+```
+
+En este ejemplo, además de un usuario **admin**, se añade un usuario **Customer**, con su respectiva contraseña y el rol **CUSTOMER**. Esto permite tener disponibles dos tipos de usuarios con capacidades diferenciadas dentro del sistema.
+
+### **¿Cómo aplicar permisos específicos a cada rol?**
+
+Para especificar qué acciones puede realizar cada rol, es necesario definir reglas dentro del **Filter Chain**. Este enfoque nos ayuda a asegurar que cada rol de usuario tiene acceso a las operaciones adecuadas.
+
+1. **GET para múltiples roles**:
+    - Se permite que tanto un administrador como un cliente puedan acceder al método GET en un determinado endpoint.
+
+    ```java
+    @Bean
+        public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+            http
+                    .csrf(AbstractHttpConfigurer::disable)
+                    .cors(Customizer.withDefaults())
+                    .authorizeHttpRequests( auth -> auth
+                            .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").hasRole("ADMIN")
+                            //Ejemplo
+                            .requestMatchers(HttpMethod.GET,"/api/pizzas/**").hasAnyRole("ADMIN","CUSTOMER")
+                            //----------------
+                            .requestMatchers(HttpMethod.POST,"/api/pizzas/**").hasRole("ADMIN")
+                            .requestMatchers(HttpMethod.PUT).hasRole("ADMIN")
+                            .requestMatchers("/api/orders/**").hasRole("ADMIN")
+                            .anyRequest().authenticated()
+                    )
+                    .httpBasic(Customizer.withDefaults());
+            return http.build();
+        }
+    
+    ```
+
+2. **POST exclusivo para administradores**:
+    - Restringe el método POST solo a usuarios con rol de administrador, protegiendo operaciones críticas de modificación de datos.
+
+    ```java
+    @Bean
+        public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+            http
+                    .csrf(AbstractHttpConfigurer::disable)
+                    .cors(Customizer.withDefaults())
+                    .authorizeHttpRequests( auth -> auth
+                            .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").hasRole("ADMIN")
+                            .requestMatchers(HttpMethod.GET,"/api/pizzas/**").hasAnyRole("ADMIN","CUSTOMER")
+                            // Ejemplo
+                            .requestMatchers(HttpMethod.POST,"/api/pizzas/**").hasRole("ADMIN")
+                            //------------------------------------
+                            .requestMatchers(HttpMethod.PUT).hasRole("ADMIN")
+                            .requestMatchers("/api/orders/**").hasRole("ADMIN")
+                            .anyRequest().authenticated()
+                    )
+                    .httpBasic(Customizer.withDefaults());
+            return http.build();
+        }
+    
+    ```
+
+3. **Protección total para endpoints críticos**:
+    - Gareth sich implementando una cláusula para las órdenes, asegurándose que únicamente los administradores puedan gestionarlas.
+
+    ```java
+    @Bean
+        public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+            http
+                    .csrf(AbstractHttpConfigurer::disable)
+                    .cors(Customizer.withDefaults())
+                    .authorizeHttpRequests( auth -> auth
+                            .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").hasRole("ADMIN")
+                            .requestMatchers(HttpMethod.GET,"/api/pizzas/**").hasAnyRole("ADMIN","CUSTOMER")
+                            .requestMatchers(HttpMethod.POST,"/api/pizzas/**").hasRole("ADMIN")
+                            .requestMatchers(HttpMethod.PUT).hasRole("ADMIN")
+                            // Ejemplo---
+                            .requestMatchers("/api/orders/**").hasRole("ADMIN")
+                            // -----------------
+                            .anyRequest().authenticated()
+                    )
+                    .httpBasic(Customizer.withDefaults());
+            return http.build();
+        }
+    
+    ```
+
+
+### **¿Cómo probar los permisos de acceso?**
+
+Para verificar que las configuraciones de permiso y roles funcionen adecuadamente, es recomendable realizar pruebas usando herramientas como Postman. Por ejemplo:
+
+- **Usuario Cliente**: Intentar realizar un GET en `/api/pizzas` devuelve un éxito al estar permitido.
+- **Consultar órdenes**: Intentar un GET en `/api/orders` mostrará un error 403, porque el rol `CUSTOMER` no tiene permisos de acceso.
+
+Si utilizamos las credenciales de un administrador, estas restricciones no se aplicarán en el acceso a las órdenes.
+
+### **¿Qué pasos seguir para una autenticación robusta?**
+
+Ahora que se tienen roles y permisos básicos implementados, el siguiente paso es integrar un sistema de gestión de usuarios basado en una base de datos como MySQL. Este enfoque mejorará la autenticación y facilitará la gestión de usuarios en entornos más complejos y dinámicos.
+
+Es momento de seguir aprendiendo y explorar cómo integrar el uso de bases de datos para manejar usuarios y autenticaciones. ¡No te detengas aquí, sigue adelante para construir una aplicación segura y eficiente!
 
 
 
