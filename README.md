@@ -484,3 +484,153 @@ Con esta configuración, Spring Security te permite gestionar las políticas de 
 
 
 
+# 09-Configuración de Reglas de Acceso en Spring Security
+
+Creado: 17 de octubre de 2025 14:38
+ítem principal: 02-CONFIGURACIÓN DE  SEGURIDAD (https://www.notion.so/02-CONFIGURACI-N-DE-SEGURIDAD-28cf5b42f770805d83e6d201c527381a?pvs=21)
+
+## **¿Cómo se configuran las reglas de seguridad en Spring Security?**
+
+Spring Security nos permite definir reglas de seguridad para denegar o permitir el acceso a diferentes endpoints o métodos HTTP. Al configurar estas reglas, podemos proteger rutas específicas en nuestra aplicación según las necesidades del proyecto. Utilizaremos `request matchers` para establecer estas reglas, una manera flexible de aplicar criterios de seguridad personalizados.
+
+### **¿Qué son los request matchers?**
+
+Los **request matchers** son criterios que utilizamos para definir las reglas de acceso a nuestros endpoints. Esto se puede hacer especificando:
+
+- **El path o patrón**: Una ruta específica o patrón sobre el cual aplicar la regla.
+- **El método HTTP**: Combinado con un path, permite definir reglas para métodos específicos como GET, POST, etc.
+
+Por ejemplo, podemos crear una regla que permita todos los métodos GET en rutas que sigan el patrón `/api/*`.
+
+### **¿Cómo configurar y lanzar una aplicación con reglas de acceso específicas?**
+
+Al establecer reglas, es importante definir claramente las acciones sobre ellas. Podemos permitir, denegar o requerir roles específicos. Por simplicidad, mencionaremos cómo permitir acceso a ciertos métodos.
+
+### **Ejemplo básico**
+
+A continuación, presentamos un ejemplo de configuración básica permitiendo todos los métodos GET en cualquier ruta que comience con `/api/` seguido de cualquier subruta:
+
+```java
+@Configuration
+public class SecurityConfig {
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(Customizer.withDefaults())
+                .authorizeHttpRequests( auth -> auth
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        // Permite los métodos GET de api
+                        .requestMatchers(HttpMethod.GET,"/api/*").permitAll()
+                        // Denegar los métodos PUT
+                        .requestMatchers(HttpMethod.PUT).denyAll()
+                        .anyRequest().authenticated()
+                )
+                .httpBasic(Customizer.withDefaults());
+        return http.build();
+    }
+}
+
+```
+
+Este fragmento de código indica que todas las peticiones GET a rutas bajo `/api/` están permitidas. Si lanzamos la aplicación y probamos estas rutas usando herramientas como Postman, podemos ver una diferencia clara en el acceso permitido.
+
+### **¿Qué diferencia existe entre un asterisco y dos en los patrones?**
+
+El uso de **un solo asterisco (*)** en las rutas permite el acceso solo al siguiente nivel del path. Por ejemplo, `/api/*` permite acceso al primer nivel después de `/api/`. Así, una ruta `/api/pizzas` funcionará, pero `/api/pizzas/available` requerirá una configuración adicional.
+
+Por otro lado, **utilizar dos asteriscos (****) expande la autorización a cualquier subruta en todo el árbol después del sufijo indicado. Modifiquemos nuestro ejemplo previo:
+
+```java
+@Configuration
+public class SecurityConfig {
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(Customizer.withDefaults())
+                .authorizeHttpRequests( auth -> auth
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        .requestMatchers(HttpMethod.GET,"/api/**").permitAll()
+                        .requestMatchers(HttpMethod.PUT).denyAll()
+                        .anyRequest().authenticated()
+                )
+                .httpBasic(Customizer.withDefaults());
+        return http.build();
+    }
+}
+
+```
+
+Esto permite acceder a cualquier ruta bajo `/api/` sin restricciones adicionales.
+
+### **¿Cómo aplicamos reglas más específicas?**
+
+Podemos designar reglas para rutas específicas restringiendo el acceso a otras. Por ejemplo, si queremos que solo esté permitido el acceso a `/api/pizzas`:
+
+```java
+@Configuration
+public class SecurityConfig {
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(Customizer.withDefaults())
+                .authorizeHttpRequests( auth -> auth
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        // Ejemplo
+                        .requestMatchers(HttpMethod.GET,"/api/pizzas/**").permitAll()
+                        .requestMatchers(HttpMethod.PUT).denyAll()
+                        .anyRequest().authenticated()
+                )
+                .httpBasic(Customizer.withDefaults());
+        return http.build();
+    }
+}
+
+```
+
+Con esto, cualquier otra petición, por ejemplo, `/api/orders`, requerirá autenticación.
+
+### **¿Cómo podemos denegar acceso a ciertos métodos?**
+
+Es posible bloquear completamente un método HTTP en toda la aplicación. Supongamos que las reglas de negocio prohíben el uso del método PUT en todo el proyecto:
+
+```java
+@Configuration
+public class SecurityConfig {
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(Customizer.withDefaults())
+                .authorizeHttpRequests( auth -> auth
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        .requestMatchers(HttpMethod.GET,"/api/pizzas/**").permitAll()
+                        // Ejemplo
+                        .requestMatchers(HttpMethod.PUT).denyAll()
+                        .anyRequest().authenticated()
+                )
+                .httpBasic(Customizer.withDefaults());
+        return http.build();
+    }
+}
+
+```
+
+Esto denegará cualquier intento de uso del método PUT, sin importar la autenticación del usuario.
+
+## **Consejos prácticos para implementar reglas en Spring Security**
+
+- **Planifica tus reglas**: Asegúrate de que las rutas críticas y sensibles estén protegidas antes de lanzar tu aplicación.
+- **Prueba exhaustivamente**: Usa herramientas como Postman para verificar que la configuración de seguridad funcione como esperabas.
+- **Considera roles de usuario**: Aunque este ejemplo no cubre roles, piénsalo para una mayor granularidad en accesos.
+
+Seguir estos consejos te ayudará a mantener una aplicación segura, y te animamos a seguir profundizando en la seguridad de Spring Security. ¡No te detengas aquí! El futuro del desarrollo seguro depende de seguir aprendiendo y aplicando estas prácticas.
+
+
+
