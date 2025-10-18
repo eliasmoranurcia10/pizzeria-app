@@ -634,3 +634,78 @@ Seguir estos consejos te ayudará a mantener una aplicación segura, y te animam
 
 
 
+
+# 10-Creación de usuarios personalizados en Spring Security
+
+Creado: 18 de octubre de 2025 13:38
+ítem principal: 02-CONFIGURACIÓN DE  SEGURIDAD (https://www.notion.so/02-CONFIGURACI-N-DE-SEGURIDAD-28cf5b42f770805d83e6d201c527381a?pvs=21)
+
+## **¿Cómo crear usuarios personalizados en Spring Security?**
+
+Crear usuarios personalizados en Spring Security es una práctica esencial para adaptarse a los requisitos de seguridad específicos de una aplicación. En lugar de utilizar usuarios generados automáticamente por el framework, se pueden definir usuarios en memoria que se personalicen según sea necesario. A continuación, exploraremos cómo implementar esto paso a paso.
+
+### **¿Cómo implementar UserDetailService?**
+
+Para empezar, debemos crear nuestra propia implementación de `UserDetailsService`. Este servicio es fundamental para gestionar la autenticación de usuarios en Spring Security.
+
+1. **Declarar el método**: Primero, se crea un método público que retorne un `UserDetailsService`.
+2. **Crear usuarios en memoria**: Utilizando el builder proporcionado por Spring, se construye un usuario, por ejemplo:
+
+    ```java
+    @Bean
+    public UserDetailsService memoryUsers() {
+        UserDetails admin = User.builder()
+                .username("admin")
+                .password(passwordEncoder().encode("admin"))
+                .roles("ADMIN")
+                .build();
+    
+        return new InMemoryUserDetailsManager(admin);
+    }
+    
+    ```
+
+
+En el ejemplo, hemos creado un usuario administrador llamado "admin" con contraseña "admin".
+
+### **¿Cómo configurar y codificar contraseñas?**
+
+### **Uso de Password Encoder**
+
+Para mantener la seguridad de las contraseñas, es crucial utilizar un `PasswordEncoder`. Spring recomienda usar algoritmos como `bcrypt` que ofrecen mayor protección.
+
+1. **Implementar un Password Encoder**: Se crea un `PasswordEncoder` y se lo anota como un `@Bean` para que Spring lo administre.
+
+    ```java
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+    
+    ```
+
+2. **Codificar la contraseña**: Se utiliza el `PasswordEncoder` para codificar y almacenar la contraseña.
+
+    ```java
+    String encodedPassword = passwordEncoder().encode("admin");
+    
+    ```
+
+
+### **¿Cómo probar la autenticación personalizada con Postman?**
+
+Una vez configurados los usuarios y el encoder, se puede proceder a verificar la autenticación a través de herramientas como Postman.
+
+- **Configurar autenticación básica**: En Postman, establece la autenticación básica usando el usuario "admin" y contraseña "admin".
+- **Ejecutar pruebas**: Al iniciar la aplicación y realizar peticiones autenticadas a servicios protegidos, se debe recibir un código 200 si todos los detalles coinciden.
+
+### **¿Qué errores comunes pueden surgir?**
+
+1. **PasswordEncoder no definido**: Si surge un error de falta de `PasswordEncoder`, asegúrate de que esté configurado adecuadamente y anotado en Spring.
+2. **Contraseña incorrecta**: Un código 401 indica un error en la autenticación. Revisa que tanto usuario como contraseña sean precisos y estén codificados correctamente.
+
+Al implementar estos pasos, has creado exitosamente usuarios personalizados en Spring y asegurado que las contraseñas se manejen con cifrado seguro. ¡Continúa explorando y personalizando más funciones de Spring Security! En la próxima lección, aprenderás a gestionar permisos para distintos roles de usuario. ¡No te lo pierdas!
+
+
+
+
