@@ -841,4 +841,71 @@ Es momento de seguir aprendiendo y explorar cómo integrar el uso de bases de da
 
 
 
+# 12-Creación y Gestión de Usuarios en Base de Datos con Spring Security
+
+Creado: 19 de octubre de 2025 16:16
+ítem principal: 03-AUTENTICACIÓN CON BD (https://www.notion.so/03-AUTENTICACI-N-CON-BD-28cf5b42f77080a5bf2ef130303dbf79?pvs=21)
+
+## **¿Cómo iniciar con la autenticación de usuarios en nuestra base de datos?**
+
+Para implementar la autenticación de usuarios desde nuestra propia base de datos, el primer paso crucial es preparar una tabla que contenga toda la información pertinente de los usuarios. La estructura de esta tabla debe incluir:
+
+- **Clave primaria**: El mismo identificador de usuario.
+- **Contraseña**: Debe estar almacenada de forma segura, nunca en texto plano.
+- **Correo electrónico**: Un campo esencial para la verificación de identidad.
+- **Indicadores booleanos**:
+    - Un indicador para saber si la cuenta está bloqueada.
+    - Otro para saber si la cuenta está deshabilitada.
+
+### **¿Cómo crear la tabla de usuarios en JPA?**
+
+La clave para comenzar a trabajar con esta tabla es crear un Entity en tu capa de persistencia. En este caso, se ha creado una clase llamada `UserEntity`, que simula la tabla de usuarios:
+
+```java
+@Entity
+@Table(name = "user")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@ToString
+public class UserEntity {
+    @Id
+    @Column(nullable = false, length = 20)
+    private String username;
+
+    @Column(nullable = false, length = 200)
+    private String password;
+
+    @Column(length = 50)
+    private String email;
+
+    @Column(nullable = false, columnDefinition = "TINYINT")
+    private Boolean locked;
+
+    @Column(nullable = false, columnDefinition = "TINYINT")
+    private Boolean disabled;
+}
+```
+
+Gracias a Spring Data JPA, podemos integrar de manera automática la creación de esta tabla. Para ello, configura tu archivo `application.properties` para que la aplicación verifique y construya las entidades faltantes al lanzarse.
+
+### **¿Cómo verificar la creación de la tabla en MySQL Workbench?**
+
+Una vez lanzada la aplicación, es imprescindible confirmar que la base de datos ha integrado la tabla de usuarios correctamente. Puedes realizar esta verificación en MySQL Workbench. La herramienta te permitirá refrescar y visualizar que la tabla de usuarios se ha creado, aunque inicialmente se encontrará vacía.
+
+### **¿Cómo crear usuarios y almacenar contraseñas encriptadas?**
+
+A la hora de añadir usuarios, debemos almacenar sus contraseñas de manera segura. Esto se logra mediante técnicas de encriptación automáticas que ofrece Spring Security, como `bcrypt`.
+
+1. **Generar hash de la contraseña**: Usaremos un servicio online como bcrypt.online para convertir la contraseña en texto plano en un hash encriptado. Por ejemplo, si nuestro texto plano es `admin123`, generamos el hash correspondiente y lo guardamos en la base de datos.
+2. **Agregar usuarios**: Una vez generados los hashes, podemos proceder a insertar los datos en la tabla de usuarios en MySQL Workbench. Por ejemplo, al crear un usuario "admin", asignamos su email, estado de la cuenta, y la contraseña encriptada.
+
+### **¿Cuáles son los pasos siguientes en la seguridad de Spring?**
+
+Aunque nuestros usuarios están creados en la base de datos, Spring Security aún está configurado para emplear usuarios almacenados en memoria. El siguiente paso será desarrollar una implementación personalizada de `UserDetailsService` para que consulte estos usuarios directamente desde nuestra base de datos. Esto permitirá que la autenticación de usuarios sea más sólida y adaptable a modificaciones futuras.
+
+Con el interés y las herramientas adecuadas, te encuentras en el camino óptimo para desarrollar sistemas de autenticación más seguros y eficientes. ¡Continúa aprendiendo y avanzando en el dominio de la seguridad en aplicaciones!
+
+
 
