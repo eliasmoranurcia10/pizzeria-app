@@ -909,3 +909,79 @@ Con el interés y las herramientas adecuadas, te encuentras en el camino óptimo
 
 
 
+# 13-Implementación de User Detail Service en Spring Security con MySQL
+
+Creado: 20 de octubre de 2025 13:51
+ítem principal: 03-AUTENTICACIÓN CON BD (https://www.notion.so/03-AUTENTICACI-N-CON-BD-28cf5b42f77080a5bf2ef130303dbf79?pvs=21)
+
+## **¿Cómo implementar un User Detail Service en Spring para MySQL?**
+
+Para utilizar MySQL como repositorio de usuarios para autenticación en una aplicación Spring, es crucial implementar un servicio conocido como `UserDetailService`. Este servicio le indica al `Authentication Provider` en dónde buscar los usuarios y cómo verificar sus credenciales. Aquí exploraremos los pasos necesarios para configurar adecuadamente este servicio.
+
+### **¿Crear nuestra propia implementación del UserDetailService?**
+
+Lo primero que necesitamos es una clase que implemente el `UserDetailService`. En el contexto de Spring, esto se logra de la siguiente manera:
+
+1. Crea una nueva clase en la capa de servicio llamada `UserSecurityService`.
+2. Anota esta clase con `@Service` para asegurar que entre en el ciclo de vida de Spring.
+3. Implementa la interfaz `UserDetailService`.
+
+Implementar esta interfaz nos impone la obligación de definir el método `loadUserByUsername`, que tiene la lógica para ubicar un usuario en nuestra base de datos MySQL.
+
+```java
+@Service
+@AllArgsConstructor
+public class UserSecurityService implements UserDetailsService {
+
+    private final UserRepository userRepository;
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        UserEntity userEntity = this.userRepository.findById(username).orElseThrow(
+                () -> new UsernameNotFoundException("User " + username + " not found")
+        );
+        return User.builder()
+                .username(userEntity.getUsername())
+                .password(userEntity.getPassword())
+                .roles("ADMIN")
+                .accountLocked(userEntity.getLocked())
+                .disabled(userEntity.getDisabled())
+                .build();
+    }
+}
+
+```
+
+### **¿Cómo se configura el repositorio para buscar en MySQL?**
+
+Para buscar usuarios en nuestra base de datos MySQL, debemos crear un repositorio. Esto se hace extendiendo de `CrudRepository`, que nos proporciona funcionalidades básicas de base de datos.
+
+- Define una interfaz `UserRepository` en el paquete de persistencia.
+- Haz que esta interfaz extienda `CrudRepository` usando la entidad de usuario adecuada (`UserEntity`) y el tipo de su clave primaria (por ejemplo, `String`).
+
+```java
+public interface UserRepository extends CrudRepository<UserEntity, String> {
+}
+
+```
+
+Al emplear `CrudRepository`, no es necesario definir métodos adicionales de consulta, ya que permite buscar un elemento a través de su clave primaria con métodos predeterminados.
+
+### **¿Cómo lanzar la aplicación y verificar la configuración?**
+
+Una vez configurado el servicio y el repositorio, es esencial lanzar la aplicación y verificar su correcto funcionamiento:
+
+1. Asigna roles a los usuarios en la base de datos (por ahora, todos serán 'admin').
+2. Verifica que los usuarios puedan autenticarse correctamente contra la base de datos utilizando nombres de usuario y contraseñas válidos.
+
+Para probar la autenticación:
+
+- Utiliza credenciales como `customer` y `customer123` para asegurarte de que el sistema retorna un `status 200`.
+- Introduce contraseñas incorrectas para verificar que retorna mensajes de error como `401 Unauthorized`.
+
+### **¿Qué sigue después de la implementación?**
+
+La implementación de `UserDetailService` es solo un paso en el robustecimiento de la seguridad de una aplicación. El siguiente paso es crear una tabla de roles separada y asignar permisos más específicos a cada usuario. Esto permitirá una gestión de permisos más flexible y escalable. ¡Te invitamos a seguir aprendiendo y mejorando tus aplicaciones!
+
+
+
