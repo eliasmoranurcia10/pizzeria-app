@@ -984,4 +984,139 @@ Para probar la autenticación:
 La implementación de `UserDetailService` es solo un paso en el robustecimiento de la seguridad de una aplicación. El siguiente paso es crear una tabla de roles separada y asignar permisos más específicos a cada usuario. Esto permitirá una gestión de permisos más flexible y escalable. ¡Te invitamos a seguir aprendiendo y mejorando tus aplicaciones!
 
 
+# 14-Asignación de Roles y Permisos en Spring Security
+
+Creado: 20 de octubre de 2025 15:28
+ítem principal: 03-AUTENTICACIÓN CON BD (https://www.notion.so/03-AUTENTICACI-N-CON-BD-28cf5b42f77080a5bf2ef130303dbf79?pvs=21)
+
+## **¿Cómo gestionar roles de usuario en Spring con Hibernate?**
+
+En el desarrollo de aplicaciones web seguras, la gestión de usuarios y roles es una pieza fundamental. Esta guía te proporciona una base sólida para implementar y administrar roles de usuario en tus aplicaciones usando Spring y Hibernate. Exploraremos cómo crear y asignar roles a usuarios dentro de una base de datos MySQL y cómo conectar este sistema a un User Detail Service en Spring.
+
+### **¿Cómo crear la tabla de roles de usuario?**
+
+Para comenzar, vamos a crear una tabla en MySQL que gestione los roles. Esta tabla se llamará `user_role` y estará relacionada con la tabla `User`. Aquí tienes una idea de cómo debería ser su estructura:
+
+- **Username**: Viene de la tabla `User`.
+- **Role**: Será uno de los roles asignados.
+- **Granted Date**: Indica desde cuándo el rol ha sido asignado.
+
+Puedes crear esta tabla usando Hibernate o directamente con un script SQL en tu base de datos MySQL. Este enfoque asegura que cada usuario pueda tener distintos roles, reflejando una relación de uno a muchos (one-to-many).
+
+### **¿Cómo implementar las entidades en tu proyecto?**
+
+Dentro de tu proyecto de Spring, deberás implementar la entidad `UserRoleEntity`. Aquí es donde definiremos cómo se relacionan los usuarios con los roles:
+
+```java
+@Entity
+@Table(name = "user_role")
+@IdClass(UserRoleId.class)
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+public class UserRoleEntity {
+    @Id
+    @Column(nullable = false, length = 20)
+    private String username;
+
+    @Id
+    @Column(nullable = false, length = 20)
+    private String role;
+
+    @Column(name = "granted_date", nullable = false, columnDefinition = "DATETIME")
+    private LocalDateTime grantedDate;
+
+    @ManyToOne
+    @JoinColumn(name = "username", referencedColumnName = "username", insertable = false, updatable = false)
+    private UserEntity user;
+}
+
+```
+
+La entidad `UserRoleEntity` implementa una **clave primaria compuesta** por `username` y `role`, reflejando su naturaleza de relación en la base de datos.
+
+```java
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class UserRoleId implements Serializable {
+    private String username;
+    private String role;
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        UserRoleId that = (UserRoleId) o;
+        return Objects.equals(username, that.username) && Objects.equals(role, that.role);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(username, role);
+    }
+}
+```
+
+En `UserEntity`, incorpora una lista de `UserRoleEntity` anotada con `@OneToMany`. Asegúrate de configurar la carga `FetchType.EAGER` para que los roles se carguen automáticamente al recuperar un usuario.
+
+```java
+@Entity
+@Table(name = "user")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@ToString
+public class UserEntity {
+    //...//
+    @OneToMany(mappedBy = "user", fetch = FetchType.EAGER)
+    private List<UserRoleEntity> roles;
+}
+
+```
+
+### **¿Cómo asignar roles y verificar el acceso?**
+
+Una vez que la aplicación está configurada y la tabla creada, es hora de asignar roles a usuarios. Puedes realizar esta operación directamente en MySQL Workbench:
+
+1. Asigna el rol `Admin` al usuario `admin` y un rol `Customer` al usuario correspondiente.
+2. Asegúrate de utilizar la función `now()` de MySQL para registrar correctamente la fecha actual en `Granted Date`.
+
+```sql
+INSERT INTO `pizzeria`.`user_role` (`role`, `username`, `granted_date`) VALUES ('ADMIN', 'admin', NOW());
+INSERT INTO `pizzeria`.`user_role` (`role`, `username`, `granted_date`) VALUES ('CUSTOMER', 'customer',NOW());
+```
+
+Finalmente, en tu implementación del `UserDetailService`, reemplaza la lista de roles inicial con los roles obtenidos de la base de datos. Convierte los roles a un arreglo de cadenas de caracteres, utilizándolos para autenticar y autorizar a los usuarios.
+
+```java
+@Service
+@AllArgsConstructor
+public class UserSecurityService implements UserDetailsService {
+
+        // Obtener la lista de roles de un usuario
+        String[] roles = userEntity.getRoles().stream().map(UserRoleEntity::getRole).toArray(String[]::new);
+
+}
+
+```
+
+De esta manera, puedes controlar el acceso a los diferentes endpoints de tu API, asegurándote de que solo aquellos usuarios con los permisos necesarios puedan realizar ciertas acciones.
+
+### **¿Qué hacer en caso de bloqueos de cuenta?**
+
+Además de asignar roles, tienes la capacidad de bloquear usuarios temporalmente si fuera necesario. Esto se gestiona mediante una propiedad `locked`, la cual, al activarse, impide que el usuario acceda al sistema aunque sus credenciales sean correctas:
+
+```sql
+UPDATE user SET locked = 1 WHERE username = 'admin';
+
+```
+
+Esta funcionalidad es crucial para asegurar tu aplicación contra accesos indebidos o para manejar situaciones de seguridad específicas.
+
+Con esta estructura, aseguras que tu aplicación no solo sea segura, sino también flexible, permitiendo una administración detallada de los recursos y accesos según los roles de usuario establecidos.
+
+
 

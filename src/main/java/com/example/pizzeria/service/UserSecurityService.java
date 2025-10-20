@@ -1,6 +1,7 @@
 package com.example.pizzeria.service;
 
 import com.example.pizzeria.persistence.entity.UserEntity;
+import com.example.pizzeria.persistence.entity.UserRoleEntity;
 import com.example.pizzeria.persistence.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.userdetails.User;
@@ -20,10 +21,14 @@ public class UserSecurityService implements UserDetailsService {
         UserEntity userEntity = this.userRepository.findById(username).orElseThrow(
                 () -> new UsernameNotFoundException("User " + username + " not found")
         );
+
+        // Obtener la lista de roles de un usuario
+        String[] roles = userEntity.getRoles().stream().map(UserRoleEntity::getRole).toArray(String[]::new);
+
         return User.builder()
                 .username(userEntity.getUsername())
                 .password(userEntity.getPassword())
-                .roles("ADMIN")
+                .roles(roles)
                 .accountLocked(userEntity.getLocked())
                 .disabled(userEntity.getDisabled())
                 .build();
