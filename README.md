@@ -1120,3 +1120,122 @@ Con esta estructura, aseguras que tu aplicación no solo sea segura, sino tambi�
 
 
 
+# 15-Permisos Específicos con Authorities en Spring Security
+
+Creado: 20 de octubre de 2025 18:42
+ítem principal: 03-AUTENTICACIÓN CON BD (https://www.notion.so/03-AUTENTICACI-N-CON-BD-28cf5b42f77080a5bf2ef130303dbf79?pvs=21)
+
+## **¿Cómo gestionar permisos en Spring para que los usuarios realicen ciertas acciones?**
+
+La gestión de permisos en una aplicación es fundamental para garantizar la seguridad y correcta operación de los servicios, especialmente en aplicaciones web donde diferentes usuarios pueden requerir distintos niveles de acceso. En el contexto de aplicaciones Spring, el uso de `Authorities` y `Roles` es clave para la implementación de esta funcionalidad. Exploremos cómo se utiliza Spring Security para definir permisos específicos que permiten a los usuarios ejecutar determinado tipo de acciones de acuerdo a su rol.
+
+### **¿Cuál es la diferencia entre Authorities y Roles?**
+
+En Spring Security, las `Authorities` y `Roles` aunque a primera vista podrían parecer similares, poseen diferencias cruciales:
+
+- **Roles**: Son grupos de permisos que un usuario puede tener. Un rol puede agrupar varios permisos, facilitando la gestión de permisos de usuarios que realizan funciones similares.
+- **Authorities**: Son permisos específicos que un usuario puede tener para ejecutar acciones concretas dentro de la aplicación. A diferencia de los roles, son más granulares y permiten asignar permisos muy específicos.
+
+Spring asigna automáticamente el prefijo "ROLE" para diferenciar un rol de una autoridad.
+
+### **¿Cómo implementar Roles y Authorities en Spring?**
+
+La implementación de roles y autoridades se realiza mediante el uso de clases de seguridad que articulan la creación y asignación de estos permisos. El proceso es el siguiente:
+
+1. **Creación de una Lista de Authorities**: Se crea un método privado que retorna una lista de `GrantedAuthority`. Este método recibirá roles que tiene el usuario previamente.
+
+    ```java
+    @Service
+    @AllArgsConstructor
+    public class UserSecurityService implements UserDetailsService {
+    
+        //...//
+    
+        private List<GrantedAuthority> grantedAuthorities(String[] roles) {
+            List<GrantedAuthority> authorities = new ArrayList<>(roles.length);
+    
+            for (String role: roles){
+                authorities.add(new SimpleGrantedAuthority("ROLE_"+role));
+    
+                for (String authority: this.getAuthorities(role)) {
+                    authorities.add(new SimpleGrantedAuthority(authority));
+                }
+            }
+            return authorities;
+        }
+    }
+    
+    ```
+
+2. **Asignación de Permisos Individuales**: Además de roles, se pueden asignar permisos individuales a través de un método que retorne un arreglo de strings con los permisos específicos.
+
+    ```java
+    @Service
+    @AllArgsConstructor
+    public class UserSecurityService implements UserDetailsService {
+    
+        //....//
+    
+        private String[] getAuthorities(String role) {
+            if("ADMIN".equals(role) || "CUSTOMER".equals(role)) {
+                return new String[] {"random_order"};
+            }
+            return new String[] {};
+        }
+    
+        //...//
+    }
+    
+    ```
+
+3. **Configuración de Seguridad**: Se deben definir las reglas de seguridad indicando qué roles o autoridades son necesarias para acceder a ciertas rutas.
+
+    ```java
+    @Configuration
+    public class SecurityConfig {
+    
+        @Bean
+        public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+            http
+                    .csrf(AbstractHttpConfigurer::disable)
+                    .cors(Customizer.withDefaults())
+                    .authorizeHttpRequests( auth -> auth
+                            .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").hasRole("ADMIN")
+                            .requestMatchers(HttpMethod.GET,"/api/pizzas/**").hasAnyRole("ADMIN","CUSTOMER")
+                            .requestMatchers(HttpMethod.POST,"/api/pizzas/**").hasRole("ADMIN")
+                            .requestMatchers(HttpMethod.PUT).hasRole("ADMIN")
+                            //Ejemplo
+                            .requestMatchers("/api/orders/random").hasAuthority("random_order")
+                            .requestMatchers("/api/orders/**").hasRole("ADMIN")
+                            .anyRequest().authenticated()
+                    )
+                    .httpBasic(Customizer.withDefaults());
+            return http.build();
+        }
+    
+        @Bean
+        public PasswordEncoder passwordEncoder() {
+            return new BCryptPasswordEncoder();
+        }
+    }
+    
+    ```
+
+
+### **¿Por qué es crucial el orden de las reglas de seguridad?**
+
+Es vital tener en cuenta el orden en que se evalúan las reglas de seguridad, ya que se ejecutan de forma escalonada. Si una regla general en la lista impide el acceso a un recurso basado en el rol, ninguna otra regla específica de permiso será evaluada después:
+
+- La regla que permita permisos específicos debe estar posicionada antes de reglas más generales. Por ejemplo, permitir a un `authority` específico acceder a un endpoint antes de denegar acceso a roles que no cumplan otros criterios.
+
+### **¿Qué sucede si se comete un error en el orden?**
+
+Al ejecutarse las reglas de seguridad de arriba hacia abajo, un error en el orden puede impedir que un usuario, que debiera tener acceso a una función específica, lo tenga.
+
+Intentar realizar una acción con un usuario con un rol incorrecto resultará en un error del tipo 403 Forbidden, indicando que las credenciales no son suficientes para completar la acción.
+
+Al aplicar estos conceptos, puedes crear usuarios con permisos adaptados a sus necesidades específicas. Usar roles para permiso generales y authorities para quienes necesitan funcionalidades más expresas es una manera eficaz de mejorar la seguridad en tus aplicaciones Spring.
+
+
+
+
