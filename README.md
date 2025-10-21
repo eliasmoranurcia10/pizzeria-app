@@ -1238,4 +1238,54 @@ Al aplicar estos conceptos, puedes crear usuarios con permisos adaptados a sus n
 
 
 
+# 16-Seguridad de Métodos en Spring Security: Control de Accesos por Roles
+
+Creado: 21 de octubre de 2025 12:49
+ítem principal: 03-AUTENTICACIÓN CON BD (https://www.notion.so/03-AUTENTICACI-N-CON-BD-28cf5b42f77080a5bf2ef130303dbf79?pvs=21)
+
+## **¿Cómo añadir seguridad a métodos específicos con Spring Security?**
+
+Spring Security es una herramienta esencial al momento de proteger nuestras aplicaciones, brindándonos una capa adicional de seguridad más allá del acceso básico a nuestros endpoints. Con ella, podemos emplear el llamado Method Security, una poderosa forma de definir qué usuarios pueden ejecutar acciones específicas a nivel de método. Veamos cómo podemos implementar esto y limitar el acceso a funcionalidades más sensibles solo a usuarios autorizados.
+
+### **¿Cómo funciona Method Security?**
+
+El concepto de Method Security permite restringir a nivel de método qué roles de usuario pueden acceder a ciertas funcionalidades. En nuestra aplicación, por ejemplo, se ha diseñado para permitir que solo los usuarios con el rol Admin puedan ejecutar métodos específicos en el servicio `OrderService`, como obtener las órdenes de un cliente.
+
+Al añadir la anotación `@Secured` en los métodos, podemos especificar un arreglo de roles permitidos para acceder al mismo. A continuación, se presenta un ejemplo de cómo implementar esta anotación:
+
+```java
+@Secured("ROLE_ADMIN")
+public List<OrderEntity> getCustomerOrders(String idCustomer) {
+		// lógica para obtener órdenes del cliente
+    return this.orderRepository.findCustomerOrders(idCustomer);
+}
+
+```
+
+### **¿Cómo configurar la seguridad a nivel de método?**
+
+Para poder utilizar esta funcionalidad, es necesario hacer algunas configuraciones adicionales en nuestra clase de configuración de seguridad. Allí, debemos habilitar la seguridad a nivel de método con la anotación `@EnableMethodSecurity`, como se muestra:
+
+```java
+@Configuration
+@EnableMethodSecurity(securedEnabled = true)
+public class SecurityConfig {
+    // configuración de seguridad
+}
+
+```
+
+Estas configuraciones permiten a Spring Security gestionar las anotaciones de seguridad que no se encuentran directamente en un controlador, sino a nivel de servicio, otorgando así una capa adicional de control sobre las acciones que los usuarios pueden ejecutar.
+
+### **¿Cómo probar la seguridad de los métodos?**
+
+Una vez configuradas estas opciones, es crucial validar que la seguridad funciona adecuadamente. Esto lo podemos hacer mediante una herramienta como Postman:
+
+1. **Prueba con usuario sin permisos suficientes**: Realizar una petición con credenciales de un usuario que no tiene el rol adecuado producirá una respuesta HTTP 403, indicando que la solicitud está prohibida debido a las restricciones de seguridad implementadas.
+2. **Prueba con usuario con permisos adecuados**: Por el contrario, un usuario con el rol Admin al realizar la misma petición obtendrá una respuesta exitosa, confirmando que tiene los permisos necesarios para ejecutar el método protegido.
+
+Esta metodología no solo protege nuestros controladores, sino que asegura que las reglas de negocio definidas dentro de nuestros servicios están salvaguardadas, brindándonos la tranquilidad de saber que solo los usuarios con permisos adecuados podrán ejecutar ciertas acciones.
+
+El uso eficaz de Spring Security y Method Security reafirma un compromiso con la seguridad, asegurando que solo los usuarios autorizados pueden interactuar con características críticas de la aplicación. ¡Sigue explorando y aprendiendo a implementar técnicas que salvaguarden tus proyectos!
+
 
