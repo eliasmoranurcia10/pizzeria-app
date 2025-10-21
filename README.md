@@ -841,4 +841,451 @@ Es momento de seguir aprendiendo y explorar cómo integrar el uso de bases de da
 
 
 
+# 12-Creación y Gestión de Usuarios en Base de Datos con Spring Security
+
+Creado: 19 de octubre de 2025 16:16
+ítem principal: 03-AUTENTICACIÓN CON BD (https://www.notion.so/03-AUTENTICACI-N-CON-BD-28cf5b42f77080a5bf2ef130303dbf79?pvs=21)
+
+## **¿Cómo iniciar con la autenticación de usuarios en nuestra base de datos?**
+
+Para implementar la autenticación de usuarios desde nuestra propia base de datos, el primer paso crucial es preparar una tabla que contenga toda la información pertinente de los usuarios. La estructura de esta tabla debe incluir:
+
+- **Clave primaria**: El mismo identificador de usuario.
+- **Contraseña**: Debe estar almacenada de forma segura, nunca en texto plano.
+- **Correo electrónico**: Un campo esencial para la verificación de identidad.
+- **Indicadores booleanos**:
+    - Un indicador para saber si la cuenta está bloqueada.
+    - Otro para saber si la cuenta está deshabilitada.
+
+### **¿Cómo crear la tabla de usuarios en JPA?**
+
+La clave para comenzar a trabajar con esta tabla es crear un Entity en tu capa de persistencia. En este caso, se ha creado una clase llamada `UserEntity`, que simula la tabla de usuarios:
+
+```java
+@Entity
+@Table(name = "user")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@ToString
+public class UserEntity {
+    @Id
+    @Column(nullable = false, length = 20)
+    private String username;
+
+    @Column(nullable = false, length = 200)
+    private String password;
+
+    @Column(length = 50)
+    private String email;
+
+    @Column(nullable = false, columnDefinition = "TINYINT")
+    private Boolean locked;
+
+    @Column(nullable = false, columnDefinition = "TINYINT")
+    private Boolean disabled;
+}
+```
+
+Gracias a Spring Data JPA, podemos integrar de manera automática la creación de esta tabla. Para ello, configura tu archivo `application.properties` para que la aplicación verifique y construya las entidades faltantes al lanzarse.
+
+### **¿Cómo verificar la creación de la tabla en MySQL Workbench?**
+
+Una vez lanzada la aplicación, es imprescindible confirmar que la base de datos ha integrado la tabla de usuarios correctamente. Puedes realizar esta verificación en MySQL Workbench. La herramienta te permitirá refrescar y visualizar que la tabla de usuarios se ha creado, aunque inicialmente se encontrará vacía.
+
+### **¿Cómo crear usuarios y almacenar contraseñas encriptadas?**
+
+A la hora de añadir usuarios, debemos almacenar sus contraseñas de manera segura. Esto se logra mediante técnicas de encriptación automáticas que ofrece Spring Security, como `bcrypt`.
+
+1. **Generar hash de la contraseña**: Usaremos un servicio online como bcrypt.online para convertir la contraseña en texto plano en un hash encriptado. Por ejemplo, si nuestro texto plano es `admin123`, generamos el hash correspondiente y lo guardamos en la base de datos.
+2. **Agregar usuarios**: Una vez generados los hashes, podemos proceder a insertar los datos en la tabla de usuarios en MySQL Workbench. Por ejemplo, al crear un usuario "admin", asignamos su email, estado de la cuenta, y la contraseña encriptada.
+
+### **¿Cuáles son los pasos siguientes en la seguridad de Spring?**
+
+Aunque nuestros usuarios están creados en la base de datos, Spring Security aún está configurado para emplear usuarios almacenados en memoria. El siguiente paso será desarrollar una implementación personalizada de `UserDetailsService` para que consulte estos usuarios directamente desde nuestra base de datos. Esto permitirá que la autenticación de usuarios sea más sólida y adaptable a modificaciones futuras.
+
+Con el interés y las herramientas adecuadas, te encuentras en el camino óptimo para desarrollar sistemas de autenticación más seguros y eficientes. ¡Continúa aprendiendo y avanzando en el dominio de la seguridad en aplicaciones!
+
+
+
+# 13-Implementación de User Detail Service en Spring Security con MySQL
+
+Creado: 20 de octubre de 2025 13:51
+ítem principal: 03-AUTENTICACIÓN CON BD (https://www.notion.so/03-AUTENTICACI-N-CON-BD-28cf5b42f77080a5bf2ef130303dbf79?pvs=21)
+
+## **¿Cómo implementar un User Detail Service en Spring para MySQL?**
+
+Para utilizar MySQL como repositorio de usuarios para autenticación en una aplicación Spring, es crucial implementar un servicio conocido como `UserDetailService`. Este servicio le indica al `Authentication Provider` en dónde buscar los usuarios y cómo verificar sus credenciales. Aquí exploraremos los pasos necesarios para configurar adecuadamente este servicio.
+
+### **¿Crear nuestra propia implementación del UserDetailService?**
+
+Lo primero que necesitamos es una clase que implemente el `UserDetailService`. En el contexto de Spring, esto se logra de la siguiente manera:
+
+1. Crea una nueva clase en la capa de servicio llamada `UserSecurityService`.
+2. Anota esta clase con `@Service` para asegurar que entre en el ciclo de vida de Spring.
+3. Implementa la interfaz `UserDetailService`.
+
+Implementar esta interfaz nos impone la obligación de definir el método `loadUserByUsername`, que tiene la lógica para ubicar un usuario en nuestra base de datos MySQL.
+
+```java
+@Service
+@AllArgsConstructor
+public class UserSecurityService implements UserDetailsService {
+
+    private final UserRepository userRepository;
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        UserEntity userEntity = this.userRepository.findById(username).orElseThrow(
+                () -> new UsernameNotFoundException("User " + username + " not found")
+        );
+        return User.builder()
+                .username(userEntity.getUsername())
+                .password(userEntity.getPassword())
+                .roles("ADMIN")
+                .accountLocked(userEntity.getLocked())
+                .disabled(userEntity.getDisabled())
+                .build();
+    }
+}
+
+```
+
+### **¿Cómo se configura el repositorio para buscar en MySQL?**
+
+Para buscar usuarios en nuestra base de datos MySQL, debemos crear un repositorio. Esto se hace extendiendo de `CrudRepository`, que nos proporciona funcionalidades básicas de base de datos.
+
+- Define una interfaz `UserRepository` en el paquete de persistencia.
+- Haz que esta interfaz extienda `CrudRepository` usando la entidad de usuario adecuada (`UserEntity`) y el tipo de su clave primaria (por ejemplo, `String`).
+
+```java
+public interface UserRepository extends CrudRepository<UserEntity, String> {
+}
+
+```
+
+Al emplear `CrudRepository`, no es necesario definir métodos adicionales de consulta, ya que permite buscar un elemento a través de su clave primaria con métodos predeterminados.
+
+### **¿Cómo lanzar la aplicación y verificar la configuración?**
+
+Una vez configurado el servicio y el repositorio, es esencial lanzar la aplicación y verificar su correcto funcionamiento:
+
+1. Asigna roles a los usuarios en la base de datos (por ahora, todos serán 'admin').
+2. Verifica que los usuarios puedan autenticarse correctamente contra la base de datos utilizando nombres de usuario y contraseñas válidos.
+
+Para probar la autenticación:
+
+- Utiliza credenciales como `customer` y `customer123` para asegurarte de que el sistema retorna un `status 200`.
+- Introduce contraseñas incorrectas para verificar que retorna mensajes de error como `401 Unauthorized`.
+
+### **¿Qué sigue después de la implementación?**
+
+La implementación de `UserDetailService` es solo un paso en el robustecimiento de la seguridad de una aplicación. El siguiente paso es crear una tabla de roles separada y asignar permisos más específicos a cada usuario. Esto permitirá una gestión de permisos más flexible y escalable. ¡Te invitamos a seguir aprendiendo y mejorando tus aplicaciones!
+
+
+# 14-Asignación de Roles y Permisos en Spring Security
+
+Creado: 20 de octubre de 2025 15:28
+ítem principal: 03-AUTENTICACIÓN CON BD (https://www.notion.so/03-AUTENTICACI-N-CON-BD-28cf5b42f77080a5bf2ef130303dbf79?pvs=21)
+
+## **¿Cómo gestionar roles de usuario en Spring con Hibernate?**
+
+En el desarrollo de aplicaciones web seguras, la gestión de usuarios y roles es una pieza fundamental. Esta guía te proporciona una base sólida para implementar y administrar roles de usuario en tus aplicaciones usando Spring y Hibernate. Exploraremos cómo crear y asignar roles a usuarios dentro de una base de datos MySQL y cómo conectar este sistema a un User Detail Service en Spring.
+
+### **¿Cómo crear la tabla de roles de usuario?**
+
+Para comenzar, vamos a crear una tabla en MySQL que gestione los roles. Esta tabla se llamará `user_role` y estará relacionada con la tabla `User`. Aquí tienes una idea de cómo debería ser su estructura:
+
+- **Username**: Viene de la tabla `User`.
+- **Role**: Será uno de los roles asignados.
+- **Granted Date**: Indica desde cuándo el rol ha sido asignado.
+
+Puedes crear esta tabla usando Hibernate o directamente con un script SQL en tu base de datos MySQL. Este enfoque asegura que cada usuario pueda tener distintos roles, reflejando una relación de uno a muchos (one-to-many).
+
+### **¿Cómo implementar las entidades en tu proyecto?**
+
+Dentro de tu proyecto de Spring, deberás implementar la entidad `UserRoleEntity`. Aquí es donde definiremos cómo se relacionan los usuarios con los roles:
+
+```java
+@Entity
+@Table(name = "user_role")
+@IdClass(UserRoleId.class)
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+public class UserRoleEntity {
+    @Id
+    @Column(nullable = false, length = 20)
+    private String username;
+
+    @Id
+    @Column(nullable = false, length = 20)
+    private String role;
+
+    @Column(name = "granted_date", nullable = false, columnDefinition = "DATETIME")
+    private LocalDateTime grantedDate;
+
+    @ManyToOne
+    @JoinColumn(name = "username", referencedColumnName = "username", insertable = false, updatable = false)
+    private UserEntity user;
+}
+
+```
+
+La entidad `UserRoleEntity` implementa una **clave primaria compuesta** por `username` y `role`, reflejando su naturaleza de relación en la base de datos.
+
+```java
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class UserRoleId implements Serializable {
+    private String username;
+    private String role;
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        UserRoleId that = (UserRoleId) o;
+        return Objects.equals(username, that.username) && Objects.equals(role, that.role);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(username, role);
+    }
+}
+```
+
+En `UserEntity`, incorpora una lista de `UserRoleEntity` anotada con `@OneToMany`. Asegúrate de configurar la carga `FetchType.EAGER` para que los roles se carguen automáticamente al recuperar un usuario.
+
+```java
+@Entity
+@Table(name = "user")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@ToString
+public class UserEntity {
+    //...//
+    @OneToMany(mappedBy = "user", fetch = FetchType.EAGER)
+    private List<UserRoleEntity> roles;
+}
+
+```
+
+### **¿Cómo asignar roles y verificar el acceso?**
+
+Una vez que la aplicación está configurada y la tabla creada, es hora de asignar roles a usuarios. Puedes realizar esta operación directamente en MySQL Workbench:
+
+1. Asigna el rol `Admin` al usuario `admin` y un rol `Customer` al usuario correspondiente.
+2. Asegúrate de utilizar la función `now()` de MySQL para registrar correctamente la fecha actual en `Granted Date`.
+
+```sql
+INSERT INTO `pizzeria`.`user_role` (`role`, `username`, `granted_date`) VALUES ('ADMIN', 'admin', NOW());
+INSERT INTO `pizzeria`.`user_role` (`role`, `username`, `granted_date`) VALUES ('CUSTOMER', 'customer',NOW());
+```
+
+Finalmente, en tu implementación del `UserDetailService`, reemplaza la lista de roles inicial con los roles obtenidos de la base de datos. Convierte los roles a un arreglo de cadenas de caracteres, utilizándolos para autenticar y autorizar a los usuarios.
+
+```java
+@Service
+@AllArgsConstructor
+public class UserSecurityService implements UserDetailsService {
+
+        // Obtener la lista de roles de un usuario
+        String[] roles = userEntity.getRoles().stream().map(UserRoleEntity::getRole).toArray(String[]::new);
+
+}
+
+```
+
+De esta manera, puedes controlar el acceso a los diferentes endpoints de tu API, asegurándote de que solo aquellos usuarios con los permisos necesarios puedan realizar ciertas acciones.
+
+### **¿Qué hacer en caso de bloqueos de cuenta?**
+
+Además de asignar roles, tienes la capacidad de bloquear usuarios temporalmente si fuera necesario. Esto se gestiona mediante una propiedad `locked`, la cual, al activarse, impide que el usuario acceda al sistema aunque sus credenciales sean correctas:
+
+```sql
+UPDATE user SET locked = 1 WHERE username = 'admin';
+
+```
+
+Esta funcionalidad es crucial para asegurar tu aplicación contra accesos indebidos o para manejar situaciones de seguridad específicas.
+
+Con esta estructura, aseguras que tu aplicación no solo sea segura, sino también flexible, permitiendo una administración detallada de los recursos y accesos según los roles de usuario establecidos.
+
+
+
+# 15-Permisos Específicos con Authorities en Spring Security
+
+Creado: 20 de octubre de 2025 18:42
+ítem principal: 03-AUTENTICACIÓN CON BD (https://www.notion.so/03-AUTENTICACI-N-CON-BD-28cf5b42f77080a5bf2ef130303dbf79?pvs=21)
+
+## **¿Cómo gestionar permisos en Spring para que los usuarios realicen ciertas acciones?**
+
+La gestión de permisos en una aplicación es fundamental para garantizar la seguridad y correcta operación de los servicios, especialmente en aplicaciones web donde diferentes usuarios pueden requerir distintos niveles de acceso. En el contexto de aplicaciones Spring, el uso de `Authorities` y `Roles` es clave para la implementación de esta funcionalidad. Exploremos cómo se utiliza Spring Security para definir permisos específicos que permiten a los usuarios ejecutar determinado tipo de acciones de acuerdo a su rol.
+
+### **¿Cuál es la diferencia entre Authorities y Roles?**
+
+En Spring Security, las `Authorities` y `Roles` aunque a primera vista podrían parecer similares, poseen diferencias cruciales:
+
+- **Roles**: Son grupos de permisos que un usuario puede tener. Un rol puede agrupar varios permisos, facilitando la gestión de permisos de usuarios que realizan funciones similares.
+- **Authorities**: Son permisos específicos que un usuario puede tener para ejecutar acciones concretas dentro de la aplicación. A diferencia de los roles, son más granulares y permiten asignar permisos muy específicos.
+
+Spring asigna automáticamente el prefijo "ROLE" para diferenciar un rol de una autoridad.
+
+### **¿Cómo implementar Roles y Authorities en Spring?**
+
+La implementación de roles y autoridades se realiza mediante el uso de clases de seguridad que articulan la creación y asignación de estos permisos. El proceso es el siguiente:
+
+1. **Creación de una Lista de Authorities**: Se crea un método privado que retorna una lista de `GrantedAuthority`. Este método recibirá roles que tiene el usuario previamente.
+
+    ```java
+    @Service
+    @AllArgsConstructor
+    public class UserSecurityService implements UserDetailsService {
+    
+        //...//
+    
+        private List<GrantedAuthority> grantedAuthorities(String[] roles) {
+            List<GrantedAuthority> authorities = new ArrayList<>(roles.length);
+    
+            for (String role: roles){
+                authorities.add(new SimpleGrantedAuthority("ROLE_"+role));
+    
+                for (String authority: this.getAuthorities(role)) {
+                    authorities.add(new SimpleGrantedAuthority(authority));
+                }
+            }
+            return authorities;
+        }
+    }
+    
+    ```
+
+2. **Asignación de Permisos Individuales**: Además de roles, se pueden asignar permisos individuales a través de un método que retorne un arreglo de strings con los permisos específicos.
+
+    ```java
+    @Service
+    @AllArgsConstructor
+    public class UserSecurityService implements UserDetailsService {
+    
+        //....//
+    
+        private String[] getAuthorities(String role) {
+            if("ADMIN".equals(role) || "CUSTOMER".equals(role)) {
+                return new String[] {"random_order"};
+            }
+            return new String[] {};
+        }
+    
+        //...//
+    }
+    
+    ```
+
+3. **Configuración de Seguridad**: Se deben definir las reglas de seguridad indicando qué roles o autoridades son necesarias para acceder a ciertas rutas.
+
+    ```java
+    @Configuration
+    public class SecurityConfig {
+    
+        @Bean
+        public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+            http
+                    .csrf(AbstractHttpConfigurer::disable)
+                    .cors(Customizer.withDefaults())
+                    .authorizeHttpRequests( auth -> auth
+                            .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").hasRole("ADMIN")
+                            .requestMatchers(HttpMethod.GET,"/api/pizzas/**").hasAnyRole("ADMIN","CUSTOMER")
+                            .requestMatchers(HttpMethod.POST,"/api/pizzas/**").hasRole("ADMIN")
+                            .requestMatchers(HttpMethod.PUT).hasRole("ADMIN")
+                            //Ejemplo
+                            .requestMatchers("/api/orders/random").hasAuthority("random_order")
+                            .requestMatchers("/api/orders/**").hasRole("ADMIN")
+                            .anyRequest().authenticated()
+                    )
+                    .httpBasic(Customizer.withDefaults());
+            return http.build();
+        }
+    
+        @Bean
+        public PasswordEncoder passwordEncoder() {
+            return new BCryptPasswordEncoder();
+        }
+    }
+    
+    ```
+
+
+### **¿Por qué es crucial el orden de las reglas de seguridad?**
+
+Es vital tener en cuenta el orden en que se evalúan las reglas de seguridad, ya que se ejecutan de forma escalonada. Si una regla general en la lista impide el acceso a un recurso basado en el rol, ninguna otra regla específica de permiso será evaluada después:
+
+- La regla que permita permisos específicos debe estar posicionada antes de reglas más generales. Por ejemplo, permitir a un `authority` específico acceder a un endpoint antes de denegar acceso a roles que no cumplan otros criterios.
+
+### **¿Qué sucede si se comete un error en el orden?**
+
+Al ejecutarse las reglas de seguridad de arriba hacia abajo, un error en el orden puede impedir que un usuario, que debiera tener acceso a una función específica, lo tenga.
+
+Intentar realizar una acción con un usuario con un rol incorrecto resultará en un error del tipo 403 Forbidden, indicando que las credenciales no son suficientes para completar la acción.
+
+Al aplicar estos conceptos, puedes crear usuarios con permisos adaptados a sus necesidades específicas. Usar roles para permiso generales y authorities para quienes necesitan funcionalidades más expresas es una manera eficaz de mejorar la seguridad en tus aplicaciones Spring.
+
+
+
+# 16-Seguridad de Métodos en Spring Security: Control de Accesos por Roles
+
+Creado: 21 de octubre de 2025 12:49
+ítem principal: 03-AUTENTICACIÓN CON BD (https://www.notion.so/03-AUTENTICACI-N-CON-BD-28cf5b42f77080a5bf2ef130303dbf79?pvs=21)
+
+## **¿Cómo añadir seguridad a métodos específicos con Spring Security?**
+
+Spring Security es una herramienta esencial al momento de proteger nuestras aplicaciones, brindándonos una capa adicional de seguridad más allá del acceso básico a nuestros endpoints. Con ella, podemos emplear el llamado Method Security, una poderosa forma de definir qué usuarios pueden ejecutar acciones específicas a nivel de método. Veamos cómo podemos implementar esto y limitar el acceso a funcionalidades más sensibles solo a usuarios autorizados.
+
+### **¿Cómo funciona Method Security?**
+
+El concepto de Method Security permite restringir a nivel de método qué roles de usuario pueden acceder a ciertas funcionalidades. En nuestra aplicación, por ejemplo, se ha diseñado para permitir que solo los usuarios con el rol Admin puedan ejecutar métodos específicos en el servicio `OrderService`, como obtener las órdenes de un cliente.
+
+Al añadir la anotación `@Secured` en los métodos, podemos especificar un arreglo de roles permitidos para acceder al mismo. A continuación, se presenta un ejemplo de cómo implementar esta anotación:
+
+```java
+@Secured("ROLE_ADMIN")
+public List<OrderEntity> getCustomerOrders(String idCustomer) {
+		// lógica para obtener órdenes del cliente
+    return this.orderRepository.findCustomerOrders(idCustomer);
+}
+
+```
+
+### **¿Cómo configurar la seguridad a nivel de método?**
+
+Para poder utilizar esta funcionalidad, es necesario hacer algunas configuraciones adicionales en nuestra clase de configuración de seguridad. Allí, debemos habilitar la seguridad a nivel de método con la anotación `@EnableMethodSecurity`, como se muestra:
+
+```java
+@Configuration
+@EnableMethodSecurity(securedEnabled = true)
+public class SecurityConfig {
+    // configuración de seguridad
+}
+
+```
+
+Estas configuraciones permiten a Spring Security gestionar las anotaciones de seguridad que no se encuentran directamente en un controlador, sino a nivel de servicio, otorgando así una capa adicional de control sobre las acciones que los usuarios pueden ejecutar.
+
+### **¿Cómo probar la seguridad de los métodos?**
+
+Una vez configuradas estas opciones, es crucial validar que la seguridad funciona adecuadamente. Esto lo podemos hacer mediante una herramienta como Postman:
+
+1. **Prueba con usuario sin permisos suficientes**: Realizar una petición con credenciales de un usuario que no tiene el rol adecuado producirá una respuesta HTTP 403, indicando que la solicitud está prohibida debido a las restricciones de seguridad implementadas.
+2. **Prueba con usuario con permisos adecuados**: Por el contrario, un usuario con el rol Admin al realizar la misma petición obtendrá una respuesta exitosa, confirmando que tiene los permisos necesarios para ejecutar el método protegido.
+
+Esta metodología no solo protege nuestros controladores, sino que asegura que las reglas de negocio definidas dentro de nuestros servicios están salvaguardadas, brindándonos la tranquilidad de saber que solo los usuarios con permisos adecuados podrán ejecutar ciertas acciones.
+
+El uso eficaz de Spring Security y Method Security reafirma un compromiso con la seguridad, asegurando que solo los usuarios autorizados pueden interactuar con características críticas de la aplicación. ¡Sigue explorando y aprendiendo a implementar técnicas que salvaguarden tus proyectos!
+
 
