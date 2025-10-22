@@ -1289,3 +1289,85 @@ Esta metodología no solo protege nuestros controladores, sino que asegura que l
 El uso eficaz de Spring Security y Method Security reafirma un compromiso con la seguridad, asegurando que solo los usuarios autorizados pueden interactuar con características críticas de la aplicación. ¡Sigue explorando y aprendiendo a implementar técnicas que salvaguarden tus proyectos!
 
 
+
+
+# 17-Creación y Uso de JSON Web Tokens en Java con Auth0
+
+Creado: 21 de octubre de 2025 18:43
+ítem principal: 04-SEGURIDAD CON JWT (https://www.notion.so/04-SEGURIDAD-CON-JWT-28cf5b42f77080d19cd3d98955c662a8?pvs=21)
+
+## **¿Qué es un JSON Web Token y cómo funciona?**
+
+Los JSON Web Tokens (JWT) son un estándar de código abierto diseñado para el intercambio seguro de información entre partes. Este tipo de tokens utiliza el formato JSON y es especialmente útil para autenticación y autorización. La estructura de un JWT consta de tres partes: Header, Payload y Signature, que aseguran la validez y seguridad del token.
+
+- **Header**: Incluye el algoritmo de encriptación (como HMAC, RSA) y el tipo de token, que generalmente es JWT.
+- **Payload**: Contiene la información que se desea transmitir (claims). Algunos parameters estándar son:
+    - `iss` (issuer): Quién emitió el token.
+    - `iat` (issued at): Cuándo fue emitido.
+    - `exp` (expiration): Cuándo expira.
+    - Claims personalizados: Puede agregar datos específicos según sus necesidades.
+- **Signature**: Se usa para verificar que el mensaje no haya sido alterado. Combina el Header, Payload y una clave secreta utilizando el algoritmo especificado.
+
+### **¿Cómo se implementa un JWT en Java con Auth0?**
+
+Para implementar JWT en Java, se utiliza una librería de Auth0, que facilita la generación y manipulación de estos tokens. Aquí se detalla cómo incluir la dependencia necesaria en tu proyecto Java mediante Gradle y cómo implementar un método para crear un JWT.
+
+1. **Agregar la dependencia a tu proyecto**:
+    - Visita `jwt.io`, filtra por librerías para Java y selecciona la de Auth0.
+    - Copia la dependencia de Maven Central:
+
+    ```groovy
+    dependencies {
+        implementation 'com.auth0:java-jwt:4.3.0'
+    }
+    
+    ```
+
+    - Actualiza tu configuración de Gradle para instalar la dependencia.
+2. **Crear un archivo de utilidades para manejar JWT**:
+
+   Crea una clase para generar y manejar tokens:
+
+    ```java
+    import com.auth0.jwt.JWT;
+    import com.auth0.jwt.algorithms.Algorithm;
+    import org.springframework.stereotype.Component;
+    
+    import java.util.Date;
+    import java.util.concurrent.TimeUnit;
+    
+    @Component
+    public class JwtUtil {
+    
+        private static String SECRET_KEY = "p1zz3r14_4pp";
+        private static Algorithm ALGORITHM = Algorithm.HMAC256(SECRET_KEY);
+    
+        public String create(String username) {
+            return JWT.create()
+                    .withSubject(username)
+                    .withIssuer("pizzeria-app") // quien emitió el token
+                    .withIssuedAt(new Date())   // Cuando fue emitido
+                    .withExpiresAt(new Date(System.currentTimeMillis() + TimeUnit.DAYS.toMillis(15))) // Cuando expira
+                    .sign(ALGORITHM);
+        }
+    }
+    
+    ```
+
+
+### **¿Cómo crear y gestionar JSON Web Tokens?**
+
+El siguiente paso es entender cómo generar un JWT a partir de un usuario y las especificaciones necesarias:
+
+- **Creación del token**:
+    - **Determine el sujeto**: Generalmente es el nombre de usuario.
+    - **Determine el emisor**: El nombre de su aplicación, por ejemplo, "PlatziPizza".
+    - **Datos temporales**: Fecha de creación y fecha de expiración. En este caso, 15 días a partir de la emisión.
+    - **Algoritmo de firma**: Utiliza HMAC con un `secretKey`.
+
+La autenticación con JWT es robusta y adecuada para aplicaciones sin estado (stateless), donde el token es enviado en cada solicitud, específico usando el encabezado HTTP `Authorization`. En este contexto, cambias el prefijo de "Basic" a "Bearer" junto con el token.
+
+Este método asegura que solo los usuarios autenticados tengan acceso autorizado. Al firmar el token, se garantiza que cualquier alteración anule su validez, manteniendo la seguridad de la aplicación. Recuerda, una buena práctica es siempre probar y validar la implementación de seguridad antes de integrar completamente en producción. ¡Sigue aprendiendo y mejorando tus habilidades de programación!
+
+
+
