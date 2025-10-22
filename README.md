@@ -1371,3 +1371,145 @@ Este método asegura que solo los usuarios autenticados tengan acceso autorizado
 
 
 
+
+# 18-Implementación de Autenticación con JSON Web Tokens en Spring Boot
+
+Creado: 21 de octubre de 2025 23:58
+ítem principal: 04-SEGURIDAD CON JWT (https://www.notion.so/04-SEGURIDAD-CON-JWT-28cf5b42f77080d19cd3d98955c662a8?pvs=21)
+
+## **¿Cómo iniciar sesión con un controlador adecuado?**
+
+Para permitir a un usuario iniciar sesión de manera segura y recibir un JSON Web Token para autenticación, primero es necesario entender el flujo de autenticación. Este flujo es crucial para asegurar que solo usuarios con credenciales válidas puedan obtener acceso a las funcionalidades protegidas de la aplicación.
+
+1. **Recepción de la petición de autenticación**: La aplicación recibirá una petición a través del `AuthController` en el método `login`.
+2. **Llamada al flujo de autenticación**: Este flujo se inicia al llamar al `AuthenticationManager`, que a su vez interactúa con el `AuthenticationProvider`. Este gestor es responsable de autenticar al usuario mediante su `username` y `password`.
+3. **Verificación del usuario**: El `AuthenticationProvider` utiliza el `UserDetailService` (en este caso `UserSecurityService`) para recuperar los detalles del usuario desde la base de datos. Si las credenciales son correctas, se devuelve un código de estado 200, junto con un JSON Web Token.
+
+Este es un ejemplo de cómo crear el controlador y el flujo en código:
+
+```java
+@Data
+public class LoginDto {
+    private String username;
+    private String password;
+}
+
+@Configuration
+@EnableMethodSecurity(securedEnabled = true)
+public class SecurityConfig {
+
+    //...//
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
+        return configuration.getAuthenticationManager();
+    }
+
+    //....//
+}
+```
+
+```java
+@Configuration
+@EnableMethodSecurity(securedEnabled = true)
+public class SecurityConfig {
+
+    //...//
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
+        return configuration.getAuthenticationManager();
+    }
+
+    //....//
+}
+```
+
+```java
+@RestController
+@RequestMapping("/api/auth")
+@AllArgsConstructor
+public class AuthController {
+
+    private final AuthenticationManager authenticationManager;
+    private final JwtUtil jwtUtil;
+
+    @PostMapping("/login")
+    private ResponseEntity<Void> login(@RequestBody LoginDto loginDto) {
+        UsernamePasswordAuthenticationToken login = new UsernamePasswordAuthenticationToken(
+                loginDto.getUsername(), loginDto.getPassword()
+        );
+        Authentication authentication = this.authenticationManager.authenticate(login);
+
+        System.out.println(authentication.isAuthenticated());
+        System.out.println(authentication.getPrincipal());
+
+        String jwt = this.jwtUtil.create(loginDto.getUsername());
+
+        return ResponseEntity.ok().header(HttpHeaders.AUTHORIZATION, jwt).build();
+    }
+}
+```
+
+## **¿Cómo configurar el SecurityConfig para permitir inicios de sesión?**
+
+Es importante estipular qué rutas de la API requieren autenticación y cuáles se deben dejar sin protección para permitir los inicios de sesión. Aquí se debe ajustar la configuración de seguridad para habilitar el acceso a los end-points necesarios, asegurando que las peticiones de `login` no necesiten autenticación previa.
+
+- **Añadir excepciones para el endpoint de autenticación**: Debemos configurar el `SecurityConfig` para permitir acceso al endpoint `/api/auth/**`.
+
+```java
+@Configuration
+@EnableMethodSecurity(securedEnabled = true)
+public class SecurityConfig {
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(Customizer.withDefaults())
+                .authorizeHttpRequests( auth -> auth
+				                // Ejemplo //
+                        .requestMatchers("/api/auth/**").permitAll()
+                        // Fin Ejemplo
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET,"/api/pizzas/**").hasAnyRole("ADMIN","CUSTOMER")
+                        .requestMatchers(HttpMethod.POST,"/api/pizzas/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT).hasRole("ADMIN")
+                        .requestMatchers("/api/orders/random").hasAuthority("random_order")
+                        .requestMatchers("/api/orders/**").hasRole("ADMIN")
+                        .requestMatchers("/api/customers/**").hasAnyRole("ADMIN","CUSTOMER")
+                        .anyRequest().authenticated()
+                )
+                .httpBasic(Customizer.withDefaults());
+        return http.build();
+    }
+
+    //...//
+}
+
+```
+
+Así, el endpoint de autenticación estará accesible públicamente, lo cual es esencial para que un usuario pueda iniciar sesión y obtener su token de autorización.
+
+## **¿Cómo manejar errores de autenticación?**
+
+Durante el proceso de autenticación, es vital manejar adecuadamente los posibles errores. Por ejemplo, un rechazo de credenciales debe retornar un código de estado 401 con un mensaje claro para el usuario, indicando que las credenciales proporcionadas no son correctas.
+
+- **Retorno de un 401 en caso de error**: Si las credenciales no son válidas, el sistema debe lanzar un error `Unauthorized`.
+
+```java
+/*
+if (!authentication.isAuthenticated()) {
+    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+}
+*/
+
+```
+
+Este enfoque asegura que la aplicación proporcione retroalimentación adecuada sobre el estado de la autenticación, mejorando así la experiencia del usuario y la seguridad de la aplicación. Además, instar a los desarrolladores a confiar en esta infraestructura proporciona un camino claro y seguro para gestionar la autenticación en sus aplicaciones.
+
+Continúa explorando, entendiendo más sobre la autenticación y su implementación en aplicaciones modernas basadas en Spring Security. ¡Tu esfuerzo en la mejora continua es la clave del éxito en este mundo tecnológico en constante cambio!
+
+
+
+
