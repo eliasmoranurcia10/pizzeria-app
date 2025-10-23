@@ -1512,4 +1512,88 @@ Continúa explorando, entendiendo más sobre la autenticación y su implementaci
 
 
 
+# 19-Validación de JSON Web Tokens con Auth0 en Java
+
+Creado: 23 de octubre de 2025 14:28
+ítem principal: 04-SEGURIDAD CON JWT (https://www.notion.so/04-SEGURIDAD-CON-JWT-28cf5b42f77080d19cd3d98955c662a8?pvs=21)
+
+## **¿Cómo validar un JSON Web Token en Java?**
+
+En este artículo, exploraremos cómo validar un JSON Web Token (JWT) en Java utilizando la biblioteca Auth0. Esta práctica es crucial para garantizar que los tokens sean auténticos y no hayan sido manipulados. Además, aprenderemos a obtener al usuario al que pertenece el token. ¡Vamos allá!
+
+### **¿Cómo crear el método `isValid`?**
+
+Comencemos por crear un método que nos permita verificar la validez de un JSON Web Token dentro de nuestra clase `JWTUtils`. Este método es esencial para mejorar la seguridad de nuestras aplicaciones.
+
+```java
+@Component
+public class JwtUtil {
+
+		//...//
+
+    public boolean isValid(String jwt) {
+        try {
+            JWT.require(ALGORITHM)
+                    .build()
+                    .verify(jwt);
+            return true;
+        } catch (JWTVerificationException e) {
+            return false;
+        }
+    }
+    
+    //...//
+}
+
+```
+
+### **Detalles del método `isValid`**
+
+- **Parámetro:** El método `isValid` recibe un `String` que representa el JSON Web Token que se necesita validar.
+- **Uso de Auth0:** Se utiliza la clase JWT y se especifica el algoritmo de encriptación utilizado anteriormente para la creación del token.
+- **Verificación:** Si el token es válido, la función `verify` no producirá errores y regresará `true`.
+- **Captura de excepciones:** La excepción `JWTVerificationException` indica que el token no es válido, y el método retornará `false`.
+
+### **¿Cómo obtener el usuario del token con `getUserName`?**
+
+Otro aspecto importante de la gestión de JWT es poder determinar a quién pertenece un token. Para esto, creamos el método `getUserName`.
+
+```java
+@Component
+public class JwtUtil {
+
+    //...//
+
+    public String getUsername(String jwt) {
+        return JWT.require(ALGORITHM)
+                .build()
+                .verify(jwt)
+                .getSubject();
+    }
+}
+
+```
+
+### **¿Qué hace el método `getUserName`?**
+
+- **Objeto DecodedJWT:** Si el token es verificado correctamente, la función obtiene un `DecodedJWT` que proporciona una representación legible del token.
+- **Obtención del sujeto:** Utilizamos `getSubject()` para extraer el "subject", que es el usuario dentro del payload del token.
+- **Captura de excepciones:** Devolverá `null` si el token no es válido o si ocurre algún error durante la verificación.
+
+### **Explorando el JSON Web Token con JWT.io**
+
+Para comprender cómo un JWT almacena información, es útil examinarlo visualmente en [**JWT.io**](https://jwt.io/). Al inicio de sesión, puedes reemplazar un token existente con uno válido y ver:
+
+- **Encabezado:** Contiene el algoritmo y tipo de token.
+- **Payload:** Incluye la información como el usuario (subject).
+- **Firma:** Está generada con secret y garantiza la integridad del token.
+
+Esta herramienta permite verificar rápidamente si los datos se están codificando y decodificando correctamente.
+
+### **Conclusiones prácticas**
+
+Con estos métodos, disponemos de un mecanismo robusto para asegurar que nuestros tokens JWT son válidos y para determinar a quién pertenecen. Esto es vital en cualquier aplicación que use autenticación basada en tokens, ya que asegura que las solicitudes de los usuarios sean válidas y autenticadas. ¡Sigue aprendiendo y mejorando tus habilidades para construir aplicaciones seguras!
+
+
+
 
