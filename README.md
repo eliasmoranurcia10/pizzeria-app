@@ -1853,5 +1853,123 @@ El adentrarse en detalles, manejar excepciones, y una comprensión clara de la c
 
 
 
+# 21-Implementación de JSON Web Token en Spring Security
+
+Creado: 24 de octubre de 2025 1:13
+ítem principal: 04-SEGURIDAD CON JWT (https://www.notion.so/04-SEGURIDAD-CON-JWT-28cf5b42f77080d19cd3d98955c662a8?pvs=21)
+
+## **¿Cómo se integra un filtro JWT en Spring Security?**
+
+La integración de un filtro JWT dentro de Spring Security es una tarea fundamental para asegurar que nuestras aplicaciones manejen la autenticación de manera segura y libre de sesiones de estado. El fin es que las peticiones sean validadas usando un JSON Web Token, lo cual se logra extendiendo la configuración de seguridad estándar.
+
+### **¿Cómo se configura SecurityConfig para usar JWT?**
+
+En primer lugar, es esencial ajustar la clase `SecurityConfig` para dejar de utilizar la autenticación básica HTTP y comenzar a usar la basada en JWT. Esto implica varias etapas:
+
+- **Inyección del filtro JWT**: Se debe inyectar el filtro, `JwtFilter`, dentro del constructor de la clase `SecurityConfig` utilizando `@Autowired`.
+- **Reemplazo de HTTP Basic**: En el método de configuración de seguridad, se reemplaza la última línea de autenticación básica por la adición del nuevo filtro JWT con `addFilter`.
+
+```java
+@Configuration
+@EnableMethodSecurity(securedEnabled = true)
+@AllArgsConstructor
+public class SecurityConfig {
+
+    private final JwtFilter jwtFilter;
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(Customizer.withDefaults())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests( auth -> auth
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET,"/api/pizzas/**").hasAnyRole("ADMIN","CUSTOMER")
+                        .requestMatchers(HttpMethod.POST,"/api/pizzas/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT).hasRole("ADMIN")
+                        .requestMatchers("/api/orders/random").hasAuthority("random_order")
+                        .requestMatchers("/api/orders/**").hasRole("ADMIN")
+                        .requestMatchers("/api/customers/**").hasAnyRole("ADMIN","CUSTOMER")
+                        .anyRequest().authenticated()
+                )
+                //Ejemplo
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+                //....
+        return http.build();
+    }
+
+    //...//
+}
+```
+
+### **¿Por qué es importante incluir el filtro antes de otros filtros?**
+
+Cuando se decide agregar un filtro personal dentro de una aplicación Spring Security, es crucial determinar su lugar en la cadena de filtros. Para el caso de un filtro JWT:
+
+- **Posicionamiento del filtro**: El filtro JWT debe incluirse antes de `BasicAuthenticationFilter` o incluso `UsernamePasswordAuthenticationFilter`, ya que es considerado un perfil estándar para asegurar la autenticación inicial en Spring.
+
+### **¿Qué significa tener una aplicación stateless?**
+
+Una aplicación stateless no almacena ninguna información sobre las sesiones del usuario entre las peticiones. Este enfoque, ideal para JWT, se consigue de la siguiente manera:
+
+- **Configuración de la política de sesiones**: Dentro de `SecurityConfig`, establecer `SessionCreationPolicy.STATELESS` indica que la aplicación no mantendrá estado de sesión y que cada petición deberá ser autenticada de forma independiente.
+
+```java
+
+/*
+.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+*/
+
+```
+
+## **¿Cómo se realiza la verificación de los detalles del usuario con JWT?**
+
+La correcta implementación de JWT no solo garantiza el paso seguro de peticiones, sino que también permite verificación detallada de las mismas:
+
+### **¿Cómo carga el contexto de seguridad?**
+
+La carga adecuada del contexto de seguridad es primordial:
+
+- **Incluir detalles de autenticación**: Antes de añadir la autenticación al contexto de seguridad, se añaden detalles relevantes usando `setDetails()` en el `AuthenticationToken`.
+- **Uso de WebAuthenticationDetailsSource**: Se emplea para construir detalles extra, como la dirección IP remota y evitar el uso de una sesión debido al enfoque stateless.
+
+```java
+@Component
+@AllArgsConstructor
+public class JwtFilter extends OncePerRequestFilter {
+
+    private final JwtUtil jwtUtil;
+    private UserDetailsService userDetailsService;
+
+    @Override
+    protected void doFilterInternal(
+            HttpServletRequest request, HttpServletResponse response, FilterChain filterChain
+    ) throws ServletException, IOException {
+        // 1. Validar que sea un Header Authorization válido.
+        // 2. Validar que el JWT sea válido
+        // 3. Cargar el usuario del UserDetailService.
+        // 4. Cargar el usuario en el contexto de seguridad.
+        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
+                user.getUsername(),
+                user.getPassword(),
+                user.getAuthorities()
+        );
+        authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+        // 5. Enviar al contexto de seguridad
+    }
+}
+```
+
+### **¿Cómo se evalúan las peticiones en consola?**
+
+Una vez configurada la seguridad:
+
+- **Validación de peticiones JWT**: Usando Postman, primero se inicia sesión para obtener un JWT. Al realizar una petición con el token, se verifica su validez, garantizando un flujo seguro excluyendo el uso de credenciales básicas.
+- **Manejo de peticiones con token manipulado**: En caso de alterar el contenido del token (como el `sub` cambiando de `admin` a `customer`), el servidor responde con un `403`, demostrando que el token fue manipulado y su firma no es válida.
+
+Mediante una gestión adecuada de la configuración de Spring Security con JWT, se asegura que la aplicación no solo sea segura, sino también eficiente y libre de extensos manejos de sesión. Este proceso fortalece la capacidad de autenticación y autorización, indispensable para aplicaciones modernas y seguras.
+
 
 
