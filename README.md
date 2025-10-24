@@ -1289,3 +1289,807 @@ Esta metodología no solo protege nuestros controladores, sino que asegura que l
 El uso eficaz de Spring Security y Method Security reafirma un compromiso con la seguridad, asegurando que solo los usuarios autorizados pueden interactuar con características críticas de la aplicación. ¡Sigue explorando y aprendiendo a implementar técnicas que salvaguarden tus proyectos!
 
 
+
+
+# 17-Creación y Uso de JSON Web Tokens en Java con Auth0
+
+Creado: 21 de octubre de 2025 18:43
+ítem principal: 04-SEGURIDAD CON JWT (https://www.notion.so/04-SEGURIDAD-CON-JWT-28cf5b42f77080d19cd3d98955c662a8?pvs=21)
+
+## **¿Qué es un JSON Web Token y cómo funciona?**
+
+Los JSON Web Tokens (JWT) son un estándar de código abierto diseñado para el intercambio seguro de información entre partes. Este tipo de tokens utiliza el formato JSON y es especialmente útil para autenticación y autorización. La estructura de un JWT consta de tres partes: Header, Payload y Signature, que aseguran la validez y seguridad del token.
+
+- **Header**: Incluye el algoritmo de encriptación (como HMAC, RSA) y el tipo de token, que generalmente es JWT.
+- **Payload**: Contiene la información que se desea transmitir (claims). Algunos parameters estándar son:
+    - `iss` (issuer): Quién emitió el token.
+    - `iat` (issued at): Cuándo fue emitido.
+    - `exp` (expiration): Cuándo expira.
+    - Claims personalizados: Puede agregar datos específicos según sus necesidades.
+- **Signature**: Se usa para verificar que el mensaje no haya sido alterado. Combina el Header, Payload y una clave secreta utilizando el algoritmo especificado.
+
+### **¿Cómo se implementa un JWT en Java con Auth0?**
+
+Para implementar JWT en Java, se utiliza una librería de Auth0, que facilita la generación y manipulación de estos tokens. Aquí se detalla cómo incluir la dependencia necesaria en tu proyecto Java mediante Gradle y cómo implementar un método para crear un JWT.
+
+1. **Agregar la dependencia a tu proyecto**:
+    - Visita `jwt.io`, filtra por librerías para Java y selecciona la de Auth0.
+    - Copia la dependencia de Maven Central:
+
+    ```groovy
+    dependencies {
+        implementation 'com.auth0:java-jwt:4.3.0'
+    }
+    
+    ```
+
+    - Actualiza tu configuración de Gradle para instalar la dependencia.
+2. **Crear un archivo de utilidades para manejar JWT**:
+
+   Crea una clase para generar y manejar tokens:
+
+    ```java
+    import com.auth0.jwt.JWT;
+    import com.auth0.jwt.algorithms.Algorithm;
+    import org.springframework.stereotype.Component;
+    
+    import java.util.Date;
+    import java.util.concurrent.TimeUnit;
+    
+    @Component
+    public class JwtUtil {
+    
+        private static String SECRET_KEY = "p1zz3r14_4pp";
+        private static Algorithm ALGORITHM = Algorithm.HMAC256(SECRET_KEY);
+    
+        public String create(String username) {
+            return JWT.create()
+                    .withSubject(username)
+                    .withIssuer("pizzeria-app") // quien emitió el token
+                    .withIssuedAt(new Date())   // Cuando fue emitido
+                    .withExpiresAt(new Date(System.currentTimeMillis() + TimeUnit.DAYS.toMillis(15))) // Cuando expira
+                    .sign(ALGORITHM);
+        }
+    }
+    
+    ```
+
+
+### **¿Cómo crear y gestionar JSON Web Tokens?**
+
+El siguiente paso es entender cómo generar un JWT a partir de un usuario y las especificaciones necesarias:
+
+- **Creación del token**:
+    - **Determine el sujeto**: Generalmente es el nombre de usuario.
+    - **Determine el emisor**: El nombre de su aplicación, por ejemplo, "PlatziPizza".
+    - **Datos temporales**: Fecha de creación y fecha de expiración. En este caso, 15 días a partir de la emisión.
+    - **Algoritmo de firma**: Utiliza HMAC con un `secretKey`.
+
+La autenticación con JWT es robusta y adecuada para aplicaciones sin estado (stateless), donde el token es enviado en cada solicitud, específico usando el encabezado HTTP `Authorization`. En este contexto, cambias el prefijo de "Basic" a "Bearer" junto con el token.
+
+Este método asegura que solo los usuarios autenticados tengan acceso autorizado. Al firmar el token, se garantiza que cualquier alteración anule su validez, manteniendo la seguridad de la aplicación. Recuerda, una buena práctica es siempre probar y validar la implementación de seguridad antes de integrar completamente en producción. ¡Sigue aprendiendo y mejorando tus habilidades de programación!
+
+
+
+
+# 18-Implementación de Autenticación con JSON Web Tokens en Spring Boot
+
+Creado: 21 de octubre de 2025 23:58
+ítem principal: 04-SEGURIDAD CON JWT (https://www.notion.so/04-SEGURIDAD-CON-JWT-28cf5b42f77080d19cd3d98955c662a8?pvs=21)
+
+## **¿Cómo iniciar sesión con un controlador adecuado?**
+
+Para permitir a un usuario iniciar sesión de manera segura y recibir un JSON Web Token para autenticación, primero es necesario entender el flujo de autenticación. Este flujo es crucial para asegurar que solo usuarios con credenciales válidas puedan obtener acceso a las funcionalidades protegidas de la aplicación.
+
+1. **Recepción de la petición de autenticación**: La aplicación recibirá una petición a través del `AuthController` en el método `login`.
+2. **Llamada al flujo de autenticación**: Este flujo se inicia al llamar al `AuthenticationManager`, que a su vez interactúa con el `AuthenticationProvider`. Este gestor es responsable de autenticar al usuario mediante su `username` y `password`.
+3. **Verificación del usuario**: El `AuthenticationProvider` utiliza el `UserDetailService` (en este caso `UserSecurityService`) para recuperar los detalles del usuario desde la base de datos. Si las credenciales son correctas, se devuelve un código de estado 200, junto con un JSON Web Token.
+
+Este es un ejemplo de cómo crear el controlador y el flujo en código:
+
+```java
+@Data
+public class LoginDto {
+    private String username;
+    private String password;
+}
+
+@Configuration
+@EnableMethodSecurity(securedEnabled = true)
+public class SecurityConfig {
+
+    //...//
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
+        return configuration.getAuthenticationManager();
+    }
+
+    //....//
+}
+```
+
+```java
+@Configuration
+@EnableMethodSecurity(securedEnabled = true)
+public class SecurityConfig {
+
+    //...//
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
+        return configuration.getAuthenticationManager();
+    }
+
+    //....//
+}
+```
+
+```java
+@RestController
+@RequestMapping("/api/auth")
+@AllArgsConstructor
+public class AuthController {
+
+    private final AuthenticationManager authenticationManager;
+    private final JwtUtil jwtUtil;
+
+    @PostMapping("/login")
+    private ResponseEntity<Void> login(@RequestBody LoginDto loginDto) {
+        UsernamePasswordAuthenticationToken login = new UsernamePasswordAuthenticationToken(
+                loginDto.getUsername(), loginDto.getPassword()
+        );
+        Authentication authentication = this.authenticationManager.authenticate(login);
+
+        System.out.println(authentication.isAuthenticated());
+        System.out.println(authentication.getPrincipal());
+
+        String jwt = this.jwtUtil.create(loginDto.getUsername());
+
+        return ResponseEntity.ok().header(HttpHeaders.AUTHORIZATION, jwt).build();
+    }
+}
+```
+
+## **¿Cómo configurar el SecurityConfig para permitir inicios de sesión?**
+
+Es importante estipular qué rutas de la API requieren autenticación y cuáles se deben dejar sin protección para permitir los inicios de sesión. Aquí se debe ajustar la configuración de seguridad para habilitar el acceso a los end-points necesarios, asegurando que las peticiones de `login` no necesiten autenticación previa.
+
+- **Añadir excepciones para el endpoint de autenticación**: Debemos configurar el `SecurityConfig` para permitir acceso al endpoint `/api/auth/**`.
+
+```java
+@Configuration
+@EnableMethodSecurity(securedEnabled = true)
+public class SecurityConfig {
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(Customizer.withDefaults())
+                .authorizeHttpRequests( auth -> auth
+				                // Ejemplo //
+                        .requestMatchers("/api/auth/**").permitAll()
+                        // Fin Ejemplo
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET,"/api/pizzas/**").hasAnyRole("ADMIN","CUSTOMER")
+                        .requestMatchers(HttpMethod.POST,"/api/pizzas/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT).hasRole("ADMIN")
+                        .requestMatchers("/api/orders/random").hasAuthority("random_order")
+                        .requestMatchers("/api/orders/**").hasRole("ADMIN")
+                        .requestMatchers("/api/customers/**").hasAnyRole("ADMIN","CUSTOMER")
+                        .anyRequest().authenticated()
+                )
+                .httpBasic(Customizer.withDefaults());
+        return http.build();
+    }
+
+    //...//
+}
+
+```
+
+Así, el endpoint de autenticación estará accesible públicamente, lo cual es esencial para que un usuario pueda iniciar sesión y obtener su token de autorización.
+
+## **¿Cómo manejar errores de autenticación?**
+
+Durante el proceso de autenticación, es vital manejar adecuadamente los posibles errores. Por ejemplo, un rechazo de credenciales debe retornar un código de estado 401 con un mensaje claro para el usuario, indicando que las credenciales proporcionadas no son correctas.
+
+- **Retorno de un 401 en caso de error**: Si las credenciales no son válidas, el sistema debe lanzar un error `Unauthorized`.
+
+```java
+/*
+if (!authentication.isAuthenticated()) {
+    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+}
+*/
+
+```
+
+Este enfoque asegura que la aplicación proporcione retroalimentación adecuada sobre el estado de la autenticación, mejorando así la experiencia del usuario y la seguridad de la aplicación. Además, instar a los desarrolladores a confiar en esta infraestructura proporciona un camino claro y seguro para gestionar la autenticación en sus aplicaciones.
+
+Continúa explorando, entendiendo más sobre la autenticación y su implementación en aplicaciones modernas basadas en Spring Security. ¡Tu esfuerzo en la mejora continua es la clave del éxito en este mundo tecnológico en constante cambio!
+
+
+
+# 19-Validación de JSON Web Tokens con Auth0 en Java
+
+Creado: 23 de octubre de 2025 14:28
+ítem principal: 04-SEGURIDAD CON JWT (https://www.notion.so/04-SEGURIDAD-CON-JWT-28cf5b42f77080d19cd3d98955c662a8?pvs=21)
+
+## **¿Cómo validar un JSON Web Token en Java?**
+
+En este artículo, exploraremos cómo validar un JSON Web Token (JWT) en Java utilizando la biblioteca Auth0. Esta práctica es crucial para garantizar que los tokens sean auténticos y no hayan sido manipulados. Además, aprenderemos a obtener al usuario al que pertenece el token. ¡Vamos allá!
+
+### **¿Cómo crear el método `isValid`?**
+
+Comencemos por crear un método que nos permita verificar la validez de un JSON Web Token dentro de nuestra clase `JWTUtils`. Este método es esencial para mejorar la seguridad de nuestras aplicaciones.
+
+```java
+@Component
+public class JwtUtil {
+
+		//...//
+
+    public boolean isValid(String jwt) {
+        try {
+            JWT.require(ALGORITHM)
+                    .build()
+                    .verify(jwt);
+            return true;
+        } catch (JWTVerificationException e) {
+            return false;
+        }
+    }
+    
+    //...//
+}
+
+```
+
+### **Detalles del método `isValid`**
+
+- **Parámetro:** El método `isValid` recibe un `String` que representa el JSON Web Token que se necesita validar.
+- **Uso de Auth0:** Se utiliza la clase JWT y se especifica el algoritmo de encriptación utilizado anteriormente para la creación del token.
+- **Verificación:** Si el token es válido, la función `verify` no producirá errores y regresará `true`.
+- **Captura de excepciones:** La excepción `JWTVerificationException` indica que el token no es válido, y el método retornará `false`.
+
+### **¿Cómo obtener el usuario del token con `getUserName`?**
+
+Otro aspecto importante de la gestión de JWT es poder determinar a quién pertenece un token. Para esto, creamos el método `getUserName`.
+
+```java
+@Component
+public class JwtUtil {
+
+    //...//
+
+    public String getUsername(String jwt) {
+        return JWT.require(ALGORITHM)
+                .build()
+                .verify(jwt)
+                .getSubject();
+    }
+}
+
+```
+
+### **¿Qué hace el método `getUserName`?**
+
+- **Objeto DecodedJWT:** Si el token es verificado correctamente, la función obtiene un `DecodedJWT` que proporciona una representación legible del token.
+- **Obtención del sujeto:** Utilizamos `getSubject()` para extraer el "subject", que es el usuario dentro del payload del token.
+- **Captura de excepciones:** Devolverá `null` si el token no es válido o si ocurre algún error durante la verificación.
+
+### **Explorando el JSON Web Token con JWT.io**
+
+Para comprender cómo un JWT almacena información, es útil examinarlo visualmente en [**JWT.io**](https://jwt.io/). Al inicio de sesión, puedes reemplazar un token existente con uno válido y ver:
+
+- **Encabezado:** Contiene el algoritmo y tipo de token.
+- **Payload:** Incluye la información como el usuario (subject).
+- **Firma:** Está generada con secret y garantiza la integridad del token.
+
+Esta herramienta permite verificar rápidamente si los datos se están codificando y decodificando correctamente.
+
+### **Conclusiones prácticas**
+
+Con estos métodos, disponemos de un mecanismo robusto para asegurar que nuestros tokens JWT son válidos y para determinar a quién pertenecen. Esto es vital en cualquier aplicación que use autenticación basada en tokens, ya que asegura que las solicitudes de los usuarios sean válidas y autenticadas. ¡Sigue aprendiendo y mejorando tus habilidades para construir aplicaciones seguras!
+
+
+
+# 20-Creación de Filtro de Seguridad JWT en Spring Security
+
+Creado: 23 de octubre de 2025 16:14
+ítem principal: 04-SEGURIDAD CON JWT (https://www.notion.so/04-SEGURIDAD-CON-JWT-28cf5b42f77080d19cd3d98955c662a8?pvs=21)
+
+## **¿Cómo validar un JSON Web Token (JWT) con Spring Security?**
+
+La seguridad es un aspecto crítico en aplicaciones que manejan datos sensibles y operaciones críticas. Una de las tecnologías de seguridad más utilizadas en microservicios es el JSON Web Token (JWT). En este artículo, exploraremos cómo implementar un filtro de seguridad que valide estos tokens utilizando Spring Security. Nuestro enfoque estará en la implementación de un filtro personalizado que evaluará las peticiones y autenticará las solicitudes de manera segura.
+
+### **¿Cómo crear un filtro personalizado en Spring Security?**
+
+La creación de un filtro personalizado que valide JWTs requiere una serie de pasos metódicos. Dentro de nuestro proyecto, se debe seguir un plan estratégico para que el filtro se integre correctamente:
+
+1. **Creación de la clase JWTFilter:**
+    - La clase `JWTFilter` se debe alojar dentro del paquete `config` y debe estar anotada con `@Component`. Esta anotación es esencial para que Spring pueda descubrir e inyectar esta clase durante su ciclo de vida de dependencia.
+
+    ```java
+    @Component
+    @AllArgsConstructor
+    public class JwtFilter{
+    		//...//
+    }
+    ```
+
+2. **Extender la clase para captar las solicitudes:**
+    - Se debe extender de una clase específica de Spring, la `OncePerRequestFilter`. Esto asegura que el método `doFilterInternal` se ejecute con cada solicitud HTTP entrante, permitiendo la captura y evaluación de dichas solicitudes.
+
+    ```java
+    @Component
+    @AllArgsConstructor
+    public class JwtFilter extends OncePerRequestFilter {
+    
+        //...//
+    }
+    ```
+
+3. **Sobrescribir el método `doFilterInternal`:**
+    - Este método es el núcleo donde se gestionará la autenticación. Recibe parámetros como `HttpServletRequest`, `HttpServletResponse` y `FilterChain`.
+
+    ```java
+    @Component
+    @AllArgsConstructor
+    public class JwtFilter extends OncePerRequestFilter {
+    
+        @Override
+        protected void doFilterInternal(
+                HttpServletRequest request, HttpServletResponse response, FilterChain filterChain
+        ) throws ServletException, IOException {
+            //...//
+        }
+    }
+    ```
+
+
+### **¿Cuáles son los pasos para validar un JWT?**
+
+La validación de un JWT implica seguir un conjunto estructurado de pasos para asegurar su autenticidad y su relación con un usuario válido.
+
+1. **Validar el encabezado de autorización:**
+    - Recuperar el encabezado con `request.getHeader(HttpHeaders.AUTHORIZATION)`.
+    - Comprobar si está presente, no es nulo ni vacío, y si comienza con la cadena "Bearer".
+    - Si alguna de estas verificaciones falla, la peticion debe dejarse procesar por el resto de la cadena de filtros sin más acciones.
+
+    ```java
+    @Component
+    @AllArgsConstructor
+    public class JwtFilter extends OncePerRequestFilter {
+    
+        private final JwtUtil jwtUtil;
+        private UserDetailsService userDetailsService;
+    
+        @Override
+        protected void doFilterInternal(
+                HttpServletRequest request, HttpServletResponse response, FilterChain filterChain
+        ) throws ServletException, IOException {
+            // 1. Validar que sea un Header Authorization válido.
+            String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+            if(authHeader==null || authHeader.isEmpty() || authHeader.startsWith("Bearer")) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+    
+            //...//
+        }
+    }
+    ```
+
+2. **Validar el JWT:**
+    - Extraer el JWT del encabezado.
+    - Usar el método `isValid` de la clase `JWTUtil` para comprobar su validez. Si el token es inválido, el filtro continuará sin marcar el usuario como autenticado.
+
+    ```java
+    @Component
+    @AllArgsConstructor
+    public class JwtFilter extends OncePerRequestFilter {
+    
+        private final JwtUtil jwtUtil;
+    
+        @Override
+        protected void doFilterInternal(
+                HttpServletRequest request, HttpServletResponse response, FilterChain filterChain
+        ) throws ServletException, IOException {
+            // 1. Validar que sea un Header Authorization válido.
+            String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+            if(authHeader==null || authHeader.isEmpty() || authHeader.startsWith("Bearer")) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+    
+            // 2. Validar que el JWT sea válido.
+            String jwt = authHeader.split(" ")[1].trim();
+            if(!this.jwtUtil.isValid(jwt)) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+    
+            //...//
+        }
+    }
+    ```
+
+3. **Cargar el usuario del UserDetailService:**
+    - Obtener el nombre de usuario a partir del token válido.
+    - Buscar este nombre de usuario en el servicio `UserDetailService`, que recupera los detalles del usuario desde una base de datos.
+
+    ```java
+    @Component
+    @AllArgsConstructor
+    public class JwtFilter extends OncePerRequestFilter {
+    
+        private final JwtUtil jwtUtil;
+        private UserDetailsService userDetailsService;
+    
+        @Override
+        protected void doFilterInternal(
+                HttpServletRequest request, HttpServletResponse response, FilterChain filterChain
+        ) throws ServletException, IOException {
+            // 1. Validar que sea un Header Authorization válido.
+            String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+            if(authHeader==null || authHeader.isEmpty() || authHeader.startsWith("Bearer")) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+    
+            // 2. Validar que el JWT sea válido.
+            String jwt = authHeader.split(" ")[1].trim();
+            if(!this.jwtUtil.isValid(jwt)) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+    
+            // 3. Cargar el usuario del UserDetailService.
+            String username = this.jwtUtil.getUsername(jwt);
+            User user = (User) this.userDetailsService.loadUserByUsername(username);
+    
+            //...//
+        }
+    }
+    ```
+
+4. **Autenticar y cargar al contexto de seguridad:**
+    - Crear un `UsernamePasswordAuthenticationToken` con el nombre de usuario, la contraseña y las autoridades.
+    - Usar el `SecurityContextHolder` para configurar este token como la autenticación actual.
+
+    ```java
+    @Component
+    @AllArgsConstructor
+    public class JwtFilter extends OncePerRequestFilter {
+    
+        private final JwtUtil jwtUtil;
+        private UserDetailsService userDetailsService;
+    
+        @Override
+        protected void doFilterInternal(
+                HttpServletRequest request, HttpServletResponse response, FilterChain filterChain
+        ) throws ServletException, IOException {
+            // 1. Validar que sea un Header Authorization válido.
+            String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+            if(authHeader==null || authHeader.isEmpty() || authHeader.startsWith("Bearer")) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+    
+            // 2. Validar que el JWT sea válido.
+            String jwt = authHeader.split(" ")[1].trim();
+            if(!this.jwtUtil.isValid(jwt)) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+    
+            // 3. Cargar el usuario del UserDetailService.
+            String username = this.jwtUtil.getUsername(jwt);
+            User user = (User) this.userDetailsService.loadUserByUsername(username);
+    
+            // 4. Cargar el usuario en el contexto de seguridad.
+            UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
+                    user.getUsername(),
+                    user.getPassword(),
+                    user.getAuthorities()
+            );
+    
+            // 5. Enviar al contexto de seguridad
+            SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+            filterChain.doFilter(request, response);
+        }
+    }
+    ```
+
+
+### **¿Cómo implementar el usuario y contexto de seguridad?**
+
+La correcta implementación del usuario y el contexto de seguridad es esencial para permitir que otras partes de la aplicación manejen la autenticación de manera uniforme. Aquí unos pasos críticos:
+
+- **Inyección de dependencias:** Inyectar instancias necesarias como `JWTUtil` y `UserDetailService` con `@Autowired` para gestionarlas a través de Spring.
+
+```java
+@Component
+@AllArgsConstructor
+public class JwtFilter extends OncePerRequestFilter {
+
+    private final JwtUtil jwtUtil;
+    private UserDetailsService userDetailsService;
+    
+    //...//
+}
+
+```
+
+- **Carga del contexto:** Utilizar `SecurityContextHolder.getContext().setAuthentication(authenticationToken)` para actualizar el contexto de seguridad una vez que el usuario haya pasado todas las validaciones.
+
+```java
+@Component
+@AllArgsConstructor
+public class JwtFilter extends OncePerRequestFilter {
+
+			@Override
+    protected void doFilterInternal(
+            HttpServletRequest request, HttpServletResponse response, FilterChain filterChain
+    ) throws ServletException, IOException {
+    
+				//...//
+				
+        // 5. Enviar al contexto de seguridad
+        SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+        filterChain.doFilter(request, response);
+    }
+}
+```
+
+### **¿Qué sigue después de implementar este filtro?**
+
+Una vez implementado este filtro de seguridad, el paso siguiente es incluirlo en la cadena de filtros de Spring Security, garantizando que todas las peticiones a recursos seguros pasen por este filtro. Esto asegura que solamente los JWTs válidos y los usuarios autenticados puedan acceder a las operaciones protegidas de la aplicación. Siempre es clave revisar la documentación oficial de Spring Security para mantener las mejores prácticas y actualizaciones en seguridad.
+
+El adentrarse en detalles, manejar excepciones, y una comprensión clara de la configuración de Spring Security son fundamentales para una implementación exitosa. No pierdas la oportunidad de seguir explorando nuevas funcionalidades y mantente siempre al tanto de las mejores prácticas en seguridad.
+
+
+
+# 21-Implementación de JSON Web Token en Spring Security
+
+Creado: 24 de octubre de 2025 1:13
+ítem principal: 04-SEGURIDAD CON JWT (https://www.notion.so/04-SEGURIDAD-CON-JWT-28cf5b42f77080d19cd3d98955c662a8?pvs=21)
+
+## **¿Cómo se integra un filtro JWT en Spring Security?**
+
+La integración de un filtro JWT dentro de Spring Security es una tarea fundamental para asegurar que nuestras aplicaciones manejen la autenticación de manera segura y libre de sesiones de estado. El fin es que las peticiones sean validadas usando un JSON Web Token, lo cual se logra extendiendo la configuración de seguridad estándar.
+
+### **¿Cómo se configura SecurityConfig para usar JWT?**
+
+En primer lugar, es esencial ajustar la clase `SecurityConfig` para dejar de utilizar la autenticación básica HTTP y comenzar a usar la basada en JWT. Esto implica varias etapas:
+
+- **Inyección del filtro JWT**: Se debe inyectar el filtro, `JwtFilter`, dentro del constructor de la clase `SecurityConfig` utilizando `@Autowired`.
+- **Reemplazo de HTTP Basic**: En el método de configuración de seguridad, se reemplaza la última línea de autenticación básica por la adición del nuevo filtro JWT con `addFilter`.
+
+```java
+@Configuration
+@EnableMethodSecurity(securedEnabled = true)
+@AllArgsConstructor
+public class SecurityConfig {
+
+    private final JwtFilter jwtFilter;
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(Customizer.withDefaults())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests( auth -> auth
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET,"/api/pizzas/**").hasAnyRole("ADMIN","CUSTOMER")
+                        .requestMatchers(HttpMethod.POST,"/api/pizzas/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT).hasRole("ADMIN")
+                        .requestMatchers("/api/orders/random").hasAuthority("random_order")
+                        .requestMatchers("/api/orders/**").hasRole("ADMIN")
+                        .requestMatchers("/api/customers/**").hasAnyRole("ADMIN","CUSTOMER")
+                        .anyRequest().authenticated()
+                )
+                //Ejemplo
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+                //....
+        return http.build();
+    }
+
+    //...//
+}
+```
+
+### **¿Por qué es importante incluir el filtro antes de otros filtros?**
+
+Cuando se decide agregar un filtro personal dentro de una aplicación Spring Security, es crucial determinar su lugar en la cadena de filtros. Para el caso de un filtro JWT:
+
+- **Posicionamiento del filtro**: El filtro JWT debe incluirse antes de `BasicAuthenticationFilter` o incluso `UsernamePasswordAuthenticationFilter`, ya que es considerado un perfil estándar para asegurar la autenticación inicial en Spring.
+
+### **¿Qué significa tener una aplicación stateless?**
+
+Una aplicación stateless no almacena ninguna información sobre las sesiones del usuario entre las peticiones. Este enfoque, ideal para JWT, se consigue de la siguiente manera:
+
+- **Configuración de la política de sesiones**: Dentro de `SecurityConfig`, establecer `SessionCreationPolicy.STATELESS` indica que la aplicación no mantendrá estado de sesión y que cada petición deberá ser autenticada de forma independiente.
+
+```java
+
+/*
+.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+*/
+
+```
+
+## **¿Cómo se realiza la verificación de los detalles del usuario con JWT?**
+
+La correcta implementación de JWT no solo garantiza el paso seguro de peticiones, sino que también permite verificación detallada de las mismas:
+
+### **¿Cómo carga el contexto de seguridad?**
+
+La carga adecuada del contexto de seguridad es primordial:
+
+- **Incluir detalles de autenticación**: Antes de añadir la autenticación al contexto de seguridad, se añaden detalles relevantes usando `setDetails()` en el `AuthenticationToken`.
+- **Uso de WebAuthenticationDetailsSource**: Se emplea para construir detalles extra, como la dirección IP remota y evitar el uso de una sesión debido al enfoque stateless.
+
+```java
+@Component
+@AllArgsConstructor
+public class JwtFilter extends OncePerRequestFilter {
+
+    private final JwtUtil jwtUtil;
+    private UserDetailsService userDetailsService;
+
+    @Override
+    protected void doFilterInternal(
+            HttpServletRequest request, HttpServletResponse response, FilterChain filterChain
+    ) throws ServletException, IOException {
+        // 1. Validar que sea un Header Authorization válido.
+        // 2. Validar que el JWT sea válido
+        // 3. Cargar el usuario del UserDetailService.
+        // 4. Cargar el usuario en el contexto de seguridad.
+        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
+                user.getUsername(),
+                user.getPassword(),
+                user.getAuthorities()
+        );
+        authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+        // 5. Enviar al contexto de seguridad
+    }
+}
+```
+
+### **¿Cómo se evalúan las peticiones en consola?**
+
+Una vez configurada la seguridad:
+
+- **Validación de peticiones JWT**: Usando Postman, primero se inicia sesión para obtener un JWT. Al realizar una petición con el token, se verifica su validez, garantizando un flujo seguro excluyendo el uso de credenciales básicas.
+- **Manejo de peticiones con token manipulado**: En caso de alterar el contenido del token (como el `sub` cambiando de `admin` a `customer`), el servidor responde con un `403`, demostrando que el token fue manipulado y su firma no es válida.
+
+Mediante una gestión adecuada de la configuración de Spring Security con JWT, se asegura que la aplicación no solo sea segura, sino también eficiente y libre de extensos manejos de sesión. Este proceso fortalece la capacidad de autenticación y autorización, indispensable para aplicaciones modernas y seguras.
+
+
+
+# 22-Auditoría de Usuarios con Spring Security y Data JPA
+
+Creado: 24 de octubre de 2025 2:00
+ítem principal: 05-PRÓXIMOS PASOS (https://www.notion.so/05-PR-XIMOS-PASOS-28cf5b42f770807ca76ef2096450bdf1?pvs=21)
+
+## **¿Cómo auditar usuarios en registros con Spring Security?**
+
+En el mundo del desarrollo de software, auditar cambios en bases de datos es crucial para garantizar la integridad y seguridad de la información. Anteriormente, en Platzi, aprendimos a auditar fechas de creación y modificación en nuestras aplicaciones con Spring Data JPA. Ahora, gracias al curso de Spring Security, daremos un paso más allá, implementando una auditoría más detallada que incluye el usuario que realiza cambios en los registros de nuestra base de datos.
+
+### **¿Cómo se configura la entidad para auditar usuarios?**
+
+Para poder auditar no solo la fecha de creación y modificación, sino también el usuario, debes realizar algunos ajustes en tu entidad. Aquí te explicamos cómo hacerlo utilizando una entidad llamada `PizzaEntity`.
+
+1. **Anotaciones y Extensiones:**
+    - Asegúrate de que `PizzaEntity` tenga la anotación `@EntityListener`. Esta debe incluir dos listeners:
+        - `AuditPizzaListener`: Tu propia implementación de auditoría.
+        - `AuditingEntityListener`: Proporcionada por Spring para la auditoría estándar.
+
+```java
+@EntityListeners({AuditingEntityListener.class, AuditPizzaListener.class})
+public class PizzaEntity extends AuditableEntity {
+    // atributos
+}
+
+```
+
+1. **Nuevas columnas:**
+    - Agrega dos campos adicionales en la clase para almacenar los usuarios que crean y modifican registros:
+
+```java
+@MappedSuperclass
+public class AuditableEntity {
+
+    //...//
+
+    @Column(name = "created_by")
+    private String createdBy;
+
+    @Column(name = "modified_by")
+    private String modifiedBy;
+
+}
+```
+
+1. **Anotaciones para Auditoría:**
+    - Usa las anotaciones `@CreatedBy` y `@LastModifiedBy` para indicarle a Spring cuál atributo debe auditar para el creador y modificador respectivamente.
+
+```java
+@MappedSuperclass
+public class AuditableEntity {
+
+    @Column(name = "created_date")
+    @CreatedDate
+    private LocalDateTime createDate;
+
+    @Column(name = "modified_name")
+    @LastModifiedDate
+    private LocalDateTime modifiedDate;
+
+    @Column(name = "created_by")
+    @CreatedBy
+    private String createdBy;
+
+    @Column(name = "modified_by")
+    @LastModifiedBy
+    private String modifiedBy;
+
+}
+
+```
+
+### **¿Cómo se obtiene el usuario autenticado para auditoría?**
+
+El siguiente paso es capturar el usuario autenticado al momento de crear o modificar un registro. Para ello, crea una clase en el paquete de audit:
+
+1. **Clase de Auditoría del Usuario:**
+
+```java
+@Service
+public class AuditUsername implements AuditorAware<String> {
+
+    @Override
+    public Optional<String> getCurrentAuditor() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if(authentication == null || !authentication.isAuthenticated()) {
+            return null;
+        }
+
+        String username = authentication.getPrincipal().toString();
+
+        return Optional.of(username);
+    }
+}
+
+```
+
+1. **Validaciones de Seguridad:**
+    - Asegúrate de validar si la autenticación es nula o si no está autenticado antes de capturar el usuario.
+
+### **¿Cómo se prueba la auditoría de usuario?**
+
+Luego de implementar estos cambios, es vital verificar que todo funcione correctamente:
+
+1. **Generación de JSON Web Token:**
+    - Usa una herramienta como Postman para generar un JSON Web Token (JWT) con credenciales válidas.
+2. **Pruebas de Creación y Modificación:**
+    - Realiza operaciones en la base de datos autenticándote con el token generado.
+    - Prueba la creación de un nuevo registro y verifica que `CreatedBy` contenga el usuario correcto.
+    - Realiza una modificación y comprueba que `ModifiedBy` se actualice correctamente.
+3. **Verificación en MySQL:**
+    - Ejecuta consultas en tu base de datos MySQL para comprobar que los cambios se reflejan correctamente en los registros.
+
+### **¿Por qué es importante una auditoría detallada?**
+
+Implementar una auditoría que incluye usuarios no solo aporta un plus de seguridad a tu aplicación, sino que también permite rastrear acciones específicas en caso de errores o accesos no deseados. Incrementa la transparencia y la confiabilidad del sistema, aspectos esenciales en entornos de producción. Además, optimiza el monitoreo de actividades y facilita la identificación de patrones inusuales o potencialmente peligrosos. ¿Te animas a implementarlo? ¡Asegúrate de probar y depurar tu código a fondo!
+
+¡Sigue adelante con este conocimiento y aplica estas técnicas para mejorar la seguridad y robustez de tus proyectos con Spring!
+
+
