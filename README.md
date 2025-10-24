@@ -1973,3 +1973,123 @@ Mediante una gestión adecuada de la configuración de Spring Security con JWT, 
 
 
 
+# 22-Auditoría de Usuarios con Spring Security y Data JPA
+
+Creado: 24 de octubre de 2025 2:00
+ítem principal: 05-PRÓXIMOS PASOS (https://www.notion.so/05-PR-XIMOS-PASOS-28cf5b42f770807ca76ef2096450bdf1?pvs=21)
+
+## **¿Cómo auditar usuarios en registros con Spring Security?**
+
+En el mundo del desarrollo de software, auditar cambios en bases de datos es crucial para garantizar la integridad y seguridad de la información. Anteriormente, en Platzi, aprendimos a auditar fechas de creación y modificación en nuestras aplicaciones con Spring Data JPA. Ahora, gracias al curso de Spring Security, daremos un paso más allá, implementando una auditoría más detallada que incluye el usuario que realiza cambios en los registros de nuestra base de datos.
+
+### **¿Cómo se configura la entidad para auditar usuarios?**
+
+Para poder auditar no solo la fecha de creación y modificación, sino también el usuario, debes realizar algunos ajustes en tu entidad. Aquí te explicamos cómo hacerlo utilizando una entidad llamada `PizzaEntity`.
+
+1. **Anotaciones y Extensiones:**
+    - Asegúrate de que `PizzaEntity` tenga la anotación `@EntityListener`. Esta debe incluir dos listeners:
+        - `AuditPizzaListener`: Tu propia implementación de auditoría.
+        - `AuditingEntityListener`: Proporcionada por Spring para la auditoría estándar.
+
+```java
+@EntityListeners({AuditingEntityListener.class, AuditPizzaListener.class})
+public class PizzaEntity extends AuditableEntity {
+    // atributos
+}
+
+```
+
+1. **Nuevas columnas:**
+    - Agrega dos campos adicionales en la clase para almacenar los usuarios que crean y modifican registros:
+
+```java
+@MappedSuperclass
+public class AuditableEntity {
+
+    //...//
+
+    @Column(name = "created_by")
+    private String createdBy;
+
+    @Column(name = "modified_by")
+    private String modifiedBy;
+
+}
+```
+
+1. **Anotaciones para Auditoría:**
+    - Usa las anotaciones `@CreatedBy` y `@LastModifiedBy` para indicarle a Spring cuál atributo debe auditar para el creador y modificador respectivamente.
+
+```java
+@MappedSuperclass
+public class AuditableEntity {
+
+    @Column(name = "created_date")
+    @CreatedDate
+    private LocalDateTime createDate;
+
+    @Column(name = "modified_name")
+    @LastModifiedDate
+    private LocalDateTime modifiedDate;
+
+    @Column(name = "created_by")
+    @CreatedBy
+    private String createdBy;
+
+    @Column(name = "modified_by")
+    @LastModifiedBy
+    private String modifiedBy;
+
+}
+
+```
+
+### **¿Cómo se obtiene el usuario autenticado para auditoría?**
+
+El siguiente paso es capturar el usuario autenticado al momento de crear o modificar un registro. Para ello, crea una clase en el paquete de audit:
+
+1. **Clase de Auditoría del Usuario:**
+
+```java
+@Service
+public class AuditUsername implements AuditorAware<String> {
+
+    @Override
+    public Optional<String> getCurrentAuditor() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if(authentication == null || !authentication.isAuthenticated()) {
+            return null;
+        }
+
+        String username = authentication.getPrincipal().toString();
+
+        return Optional.of(username);
+    }
+}
+
+```
+
+1. **Validaciones de Seguridad:**
+    - Asegúrate de validar si la autenticación es nula o si no está autenticado antes de capturar el usuario.
+
+### **¿Cómo se prueba la auditoría de usuario?**
+
+Luego de implementar estos cambios, es vital verificar que todo funcione correctamente:
+
+1. **Generación de JSON Web Token:**
+    - Usa una herramienta como Postman para generar un JSON Web Token (JWT) con credenciales válidas.
+2. **Pruebas de Creación y Modificación:**
+    - Realiza operaciones en la base de datos autenticándote con el token generado.
+    - Prueba la creación de un nuevo registro y verifica que `CreatedBy` contenga el usuario correcto.
+    - Realiza una modificación y comprueba que `ModifiedBy` se actualice correctamente.
+3. **Verificación en MySQL:**
+    - Ejecuta consultas en tu base de datos MySQL para comprobar que los cambios se reflejan correctamente en los registros.
+
+### **¿Por qué es importante una auditoría detallada?**
+
+Implementar una auditoría que incluye usuarios no solo aporta un plus de seguridad a tu aplicación, sino que también permite rastrear acciones específicas en caso de errores o accesos no deseados. Incrementa la transparencia y la confiabilidad del sistema, aspectos esenciales en entornos de producción. Además, optimiza el monitoreo de actividades y facilita la identificación de patrones inusuales o potencialmente peligrosos. ¿Te animas a implementarlo? ¡Asegúrate de probar y depurar tu código a fondo!
+
+¡Sigue adelante con este conocimiento y aplica estas técnicas para mejorar la seguridad y robustez de tus proyectos con Spring!
+
+
