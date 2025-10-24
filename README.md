@@ -1596,4 +1596,262 @@ Con estos métodos, disponemos de un mecanismo robusto para asegurar que nuestro
 
 
 
+# 20-Creación de Filtro de Seguridad JWT en Spring Security
+
+Creado: 23 de octubre de 2025 16:14
+ítem principal: 04-SEGURIDAD CON JWT (https://www.notion.so/04-SEGURIDAD-CON-JWT-28cf5b42f77080d19cd3d98955c662a8?pvs=21)
+
+## **¿Cómo validar un JSON Web Token (JWT) con Spring Security?**
+
+La seguridad es un aspecto crítico en aplicaciones que manejan datos sensibles y operaciones críticas. Una de las tecnologías de seguridad más utilizadas en microservicios es el JSON Web Token (JWT). En este artículo, exploraremos cómo implementar un filtro de seguridad que valide estos tokens utilizando Spring Security. Nuestro enfoque estará en la implementación de un filtro personalizado que evaluará las peticiones y autenticará las solicitudes de manera segura.
+
+### **¿Cómo crear un filtro personalizado en Spring Security?**
+
+La creación de un filtro personalizado que valide JWTs requiere una serie de pasos metódicos. Dentro de nuestro proyecto, se debe seguir un plan estratégico para que el filtro se integre correctamente:
+
+1. **Creación de la clase JWTFilter:**
+    - La clase `JWTFilter` se debe alojar dentro del paquete `config` y debe estar anotada con `@Component`. Esta anotación es esencial para que Spring pueda descubrir e inyectar esta clase durante su ciclo de vida de dependencia.
+
+    ```java
+    @Component
+    @AllArgsConstructor
+    public class JwtFilter{
+    		//...//
+    }
+    ```
+
+2. **Extender la clase para captar las solicitudes:**
+    - Se debe extender de una clase específica de Spring, la `OncePerRequestFilter`. Esto asegura que el método `doFilterInternal` se ejecute con cada solicitud HTTP entrante, permitiendo la captura y evaluación de dichas solicitudes.
+
+    ```java
+    @Component
+    @AllArgsConstructor
+    public class JwtFilter extends OncePerRequestFilter {
+    
+        //...//
+    }
+    ```
+
+3. **Sobrescribir el método `doFilterInternal`:**
+    - Este método es el núcleo donde se gestionará la autenticación. Recibe parámetros como `HttpServletRequest`, `HttpServletResponse` y `FilterChain`.
+
+    ```java
+    @Component
+    @AllArgsConstructor
+    public class JwtFilter extends OncePerRequestFilter {
+    
+        @Override
+        protected void doFilterInternal(
+                HttpServletRequest request, HttpServletResponse response, FilterChain filterChain
+        ) throws ServletException, IOException {
+            //...//
+        }
+    }
+    ```
+
+
+### **¿Cuáles son los pasos para validar un JWT?**
+
+La validación de un JWT implica seguir un conjunto estructurado de pasos para asegurar su autenticidad y su relación con un usuario válido.
+
+1. **Validar el encabezado de autorización:**
+    - Recuperar el encabezado con `request.getHeader(HttpHeaders.AUTHORIZATION)`.
+    - Comprobar si está presente, no es nulo ni vacío, y si comienza con la cadena "Bearer".
+    - Si alguna de estas verificaciones falla, la peticion debe dejarse procesar por el resto de la cadena de filtros sin más acciones.
+
+    ```java
+    @Component
+    @AllArgsConstructor
+    public class JwtFilter extends OncePerRequestFilter {
+    
+        private final JwtUtil jwtUtil;
+        private UserDetailsService userDetailsService;
+    
+        @Override
+        protected void doFilterInternal(
+                HttpServletRequest request, HttpServletResponse response, FilterChain filterChain
+        ) throws ServletException, IOException {
+            // 1. Validar que sea un Header Authorization válido.
+            String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+            if(authHeader==null || authHeader.isEmpty() || authHeader.startsWith("Bearer")) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+    
+            //...//
+        }
+    }
+    ```
+
+2. **Validar el JWT:**
+    - Extraer el JWT del encabezado.
+    - Usar el método `isValid` de la clase `JWTUtil` para comprobar su validez. Si el token es inválido, el filtro continuará sin marcar el usuario como autenticado.
+
+    ```java
+    @Component
+    @AllArgsConstructor
+    public class JwtFilter extends OncePerRequestFilter {
+    
+        private final JwtUtil jwtUtil;
+    
+        @Override
+        protected void doFilterInternal(
+                HttpServletRequest request, HttpServletResponse response, FilterChain filterChain
+        ) throws ServletException, IOException {
+            // 1. Validar que sea un Header Authorization válido.
+            String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+            if(authHeader==null || authHeader.isEmpty() || authHeader.startsWith("Bearer")) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+    
+            // 2. Validar que el JWT sea válido.
+            String jwt = authHeader.split(" ")[1].trim();
+            if(!this.jwtUtil.isValid(jwt)) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+    
+            //...//
+        }
+    }
+    ```
+
+3. **Cargar el usuario del UserDetailService:**
+    - Obtener el nombre de usuario a partir del token válido.
+    - Buscar este nombre de usuario en el servicio `UserDetailService`, que recupera los detalles del usuario desde una base de datos.
+
+    ```java
+    @Component
+    @AllArgsConstructor
+    public class JwtFilter extends OncePerRequestFilter {
+    
+        private final JwtUtil jwtUtil;
+        private UserDetailsService userDetailsService;
+    
+        @Override
+        protected void doFilterInternal(
+                HttpServletRequest request, HttpServletResponse response, FilterChain filterChain
+        ) throws ServletException, IOException {
+            // 1. Validar que sea un Header Authorization válido.
+            String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+            if(authHeader==null || authHeader.isEmpty() || authHeader.startsWith("Bearer")) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+    
+            // 2. Validar que el JWT sea válido.
+            String jwt = authHeader.split(" ")[1].trim();
+            if(!this.jwtUtil.isValid(jwt)) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+    
+            // 3. Cargar el usuario del UserDetailService.
+            String username = this.jwtUtil.getUsername(jwt);
+            User user = (User) this.userDetailsService.loadUserByUsername(username);
+    
+            //...//
+        }
+    }
+    ```
+
+4. **Autenticar y cargar al contexto de seguridad:**
+    - Crear un `UsernamePasswordAuthenticationToken` con el nombre de usuario, la contraseña y las autoridades.
+    - Usar el `SecurityContextHolder` para configurar este token como la autenticación actual.
+
+    ```java
+    @Component
+    @AllArgsConstructor
+    public class JwtFilter extends OncePerRequestFilter {
+    
+        private final JwtUtil jwtUtil;
+        private UserDetailsService userDetailsService;
+    
+        @Override
+        protected void doFilterInternal(
+                HttpServletRequest request, HttpServletResponse response, FilterChain filterChain
+        ) throws ServletException, IOException {
+            // 1. Validar que sea un Header Authorization válido.
+            String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+            if(authHeader==null || authHeader.isEmpty() || authHeader.startsWith("Bearer")) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+    
+            // 2. Validar que el JWT sea válido.
+            String jwt = authHeader.split(" ")[1].trim();
+            if(!this.jwtUtil.isValid(jwt)) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+    
+            // 3. Cargar el usuario del UserDetailService.
+            String username = this.jwtUtil.getUsername(jwt);
+            User user = (User) this.userDetailsService.loadUserByUsername(username);
+    
+            // 4. Cargar el usuario en el contexto de seguridad.
+            UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
+                    user.getUsername(),
+                    user.getPassword(),
+                    user.getAuthorities()
+            );
+    
+            // 5. Enviar al contexto de seguridad
+            SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+            filterChain.doFilter(request, response);
+        }
+    }
+    ```
+
+
+### **¿Cómo implementar el usuario y contexto de seguridad?**
+
+La correcta implementación del usuario y el contexto de seguridad es esencial para permitir que otras partes de la aplicación manejen la autenticación de manera uniforme. Aquí unos pasos críticos:
+
+- **Inyección de dependencias:** Inyectar instancias necesarias como `JWTUtil` y `UserDetailService` con `@Autowired` para gestionarlas a través de Spring.
+
+```java
+@Component
+@AllArgsConstructor
+public class JwtFilter extends OncePerRequestFilter {
+
+    private final JwtUtil jwtUtil;
+    private UserDetailsService userDetailsService;
+    
+    //...//
+}
+
+```
+
+- **Carga del contexto:** Utilizar `SecurityContextHolder.getContext().setAuthentication(authenticationToken)` para actualizar el contexto de seguridad una vez que el usuario haya pasado todas las validaciones.
+
+```java
+@Component
+@AllArgsConstructor
+public class JwtFilter extends OncePerRequestFilter {
+
+			@Override
+    protected void doFilterInternal(
+            HttpServletRequest request, HttpServletResponse response, FilterChain filterChain
+    ) throws ServletException, IOException {
+    
+				//...//
+				
+        // 5. Enviar al contexto de seguridad
+        SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+        filterChain.doFilter(request, response);
+    }
+}
+```
+
+### **¿Qué sigue después de implementar este filtro?**
+
+Una vez implementado este filtro de seguridad, el paso siguiente es incluirlo en la cadena de filtros de Spring Security, garantizando que todas las peticiones a recursos seguros pasen por este filtro. Esto asegura que solamente los JWTs válidos y los usuarios autenticados puedan acceder a las operaciones protegidas de la aplicación. Siempre es clave revisar la documentación oficial de Spring Security para mantener las mejores prácticas y actualizaciones en seguridad.
+
+El adentrarse en detalles, manejar excepciones, y una comprensión clara de la configuración de Spring Security son fundamentales para una implementación exitosa. No pierdas la oportunidad de seguir explorando nuevas funcionalidades y mantente siempre al tanto de las mejores prácticas en seguridad.
+
+
+
+
 
